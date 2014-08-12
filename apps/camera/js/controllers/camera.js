@@ -7,6 +7,7 @@ define(function(require, exports, module) {
 
 var debug = require('debug')('controller:camera');
 var bindAll = require('lib/bind-all');
+var calculateFocusArea = require('lib/calculate-focus-area');
 
 /**
  * Exports
@@ -72,6 +73,7 @@ CameraController.prototype.bindEvents = function() {
   app.on('visible', this.camera.load);
   app.on('capture', this.capture);
   app.on('hidden', this.onHidden);
+  app.on('forcefocus', this.forceFocus);
 
   // Settings
   settings.recorderProfiles.on('change:selected', this.updateRecorderProfile);
@@ -84,6 +86,25 @@ CameraController.prototype.bindEvents = function() {
   settings.hdr.on('change:selected', this.onHDRChange);
 
   debug('events bound');
+};
+
+CameraController.prototype.forceFocus = function() {
+  //console.info(this.camera);
+  //console.info(window);
+  var focusPoint = {
+    x: parseInt(window.innerWidth/2),
+    y: parseInt(window.innerHeight/2)
+  };
+  focusPoint.area = calculateFocusArea(
+    focusPoint.x, focusPoint.y,
+    window.innerWidth,
+    window.innerHeight);
+  //this.views.focus.setPosition(focusPoint.x, focusPoint.y);
+  //Need to force focus area
+  setTimeout(function() {
+    this.camera.updateFocusArea(focusPoint.area);
+  }.bind(this), 200);
+  //this.camera.emit('change:focus');
 };
 
 /**

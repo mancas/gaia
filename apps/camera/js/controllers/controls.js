@@ -252,6 +252,7 @@ ControlsController.prototype.onViewModeChanged = function(mode) {
   this.view.disable();
   if (mode) { setting.select(mode); }
   else { setting.next(); }
+  this.app.emit('forcefocus');
 };
 
 
