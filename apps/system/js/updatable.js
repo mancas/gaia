@@ -144,6 +144,7 @@ function SystemUpdatable() {
 }
 
 SystemUpdatable.KNOWN_UPDATE_FLAG = 'known-sysupdate';
+SystemUpdatable.UPDATE_REGISTER_FLAG = 'update-register';
 
 SystemUpdatable.prototype.download = function() {
   if (this.downloading) {

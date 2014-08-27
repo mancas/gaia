@@ -1098,6 +1098,9 @@ suite('system/UpdateManager', function() {
     });
 
     suite('download prompt', function() {
+      var realStartDownloadsFunc;
+      var checkWifiPrioritizedSpy;
+
       setup(function() {
         MockUtilityTray.show();
         var systemUpdatable = new MockSystemUpdatable();
@@ -1115,6 +1118,22 @@ suite('system/UpdateManager', function() {
         UpdateManager._dataConnectionWarningEnabled = true;
         UpdateManager._startedDownloadUsingDataConnection = false;
         UpdateManager.downloadDialog.dataset.nowifi = false;
+
+        realStartDownloadsFunc = UpdateManager.startDownloads;
+        UpdateManager.startDownloads = function() {
+          UpdateManager.downloadDialog.classList.remove('visible');
+          return true;
+        };
+        navigator.mozWifiManager.connection.status = 'connected';
+        checkWifiPrioritizedSpy =
+          this.sinon.spy(UpdateManager, 'getWifiPrioritized');
+      });
+
+      teardown(function() {
+        UpdateManager.startDownloads = realStartDownloadsFunc;
+        MockNavigatorSettings.
+          mSettings[UpdateManager.WIFI_PRIORITIZED_KEY] = true;
+        checkWifiPrioritizedSpy.restore();
       });
 
       suite('download prompt', function() {
@@ -1198,30 +1217,65 @@ suite('system/UpdateManager', function() {
       });
 
       test('should handle clicking download when using data connection ' +
-            'in the first time',
+            'in the first time and wifi is not prioritized',
           function(done) {
-        var spy = this.sinon.spy(UpdateManager, '_getDataRoamingSetting');
         UpdateManager.downloadDialog.dataset.nowifi = true;
+        navigator.mozWifiManager.connection.status = 'disconnected';
+        navigator.mozSettings.mSettings[UpdateManager.WIFI_PRIORITIZED_KEY] =
+          false;
+
+        var evt = document.createEvent('MouseEvents');
+        evt.initEvent('click', true, true);
+        var open3GDialogSpy =
+          this.sinon.spy(UpdateManager, 'showPrompt3GAdditionalCost');
+        var roamingSpy =
+        this.sinon.spy(UpdateManager, '_getDataRoamingSetting');
+
+        UpdateManager.requestDownloads(evt);
+        checkWifiPrioritizedSpy.lastCall.returnValue.then(function() {
+          assert.ok(open3GDialogSpy.calledOnce,
+            'showPrompt3GAdditionalCost must be called');
+          roamingSpy.lastCall.returnValue.then(function() {
+            var css = UpdateManager.downloadViaDataConnectionDialog.classList;
+            assert.isTrue(css.contains('visible'));
+          });
+        }).then(done, done);
+      });
+
+      test('should handle clicking download when using data connection ' +
+            'in the first time and wifi is prioritized',
+          function(done) {
+        UpdateManager.downloadDialog.dataset.nowifi = true;
+        navigator.mozWifiManager.connection.status = 'disconnected';
+        navigator.mozSettings.mSettings[UpdateManager.WIFI_PRIORITIZED_KEY] =
+          true;
+
+        var evt = document.createEvent('MouseEvents');
+        evt.initEvent('click', true, true);
+        var showPromptWifiPrioritizedSpy =
+          this.sinon.spy(UpdateManager, 'showPromptWifiPrioritized');
+
+        UpdateManager.requestDownloads(evt);
+        checkWifiPrioritizedSpy.lastCall.returnValue.then(function() {
+          assert.ok(showPromptWifiPrioritizedSpy.calledOnce,
+            'showPromptWifiPrioritized must be called');
+        }).then(done, done);
+      });
+
+      test('should handle clicking download when using wifi ' +
+        'regardless of the value of wifi prioritized parameter',
+        function() {
+        UpdateManager._isDataConnectionWarningDialogEnabled = false;
+
+        var startDownloadsSpy =
+          this.sinon.spy(UpdateManager, 'startDownloads');
 
         var evt = document.createEvent('MouseEvents');
         evt.initEvent('click', true, true);
 
         UpdateManager.requestDownloads(evt);
-
-        spy.lastCall.returnValue.then(function() {
-          var css = UpdateManager.downloadViaDataConnectionDialog.classList;
-          var titleL10nId =
-            UpdateManager.downloadViaDataConnectionTitle
-            .getAttribute('data-l10n-id');
-          var messageL10nId =
-            UpdateManager.downloadViaDataConnectionMessage
-            .getAttribute('data-l10n-id');
-
-          assert.isTrue(css.contains('visible'));
-          assert.equal(titleL10nId, 'downloadUpdatesViaDataConnection');
-          assert.equal(messageL10nId,
-            'downloadUpdatesViaDataConnectionMessage2');
-        }).then(done, done);
+        assert.isFalse(UpdateManager._isNotWifiConnected());
+        assert.isFalse(UpdateManager._startedDownloadUsingDataConnection);
       });
 
       test('should handle clicking download when using data ' +
@@ -1229,13 +1283,16 @@ suite('system/UpdateManager', function() {
           function(done) {
         var spy = this.sinon.spy(UpdateManager, '_getDataRoamingSetting');
         UpdateManager.downloadDialog.dataset.nowifi = true;
+        navigator.mozWifiManager.connection.status = 'disconnected';
         MockNavigatorSettings.mSettings['ril.data.roaming_enabled'] = true;
 
-        var evt = document.createEvent('MouseEvents');
-        evt.initEvent('click', true, true);
+        var evt = {
+          preventDefault: function() {},
+          type: 'click',
+          target: UpdateManager.downloadViaDataConnectionButton
+        };
 
         UpdateManager.requestDownloads(evt);
-
         spy.lastCall.returnValue.then(function() {
           var css = UpdateManager.downloadViaDataConnectionDialog.classList;
           var titleL10nId =
@@ -1253,23 +1310,35 @@ suite('system/UpdateManager', function() {
         }).then(done, done);
       });
 
-      test('should handle clicking download when using wifi', function() {
-        UpdateManager._isDataConnectionWarningDialogEnabled = false;
+      test('should handle clicking download when using data connection',
+        function(done) {
+        var spy = this.sinon.spy(UpdateManager, '_getDataRoamingSetting');
+        UpdateManager.downloadDialog.dataset.nowifi = true;
+        navigator.mozWifiManager.connection.status = 'disconnected';
+        MockNavigatorSettings.mSettings['ril.data.roaming_enabled'] = false;
 
-        var calledToMockStartDownloads = false;
-        var realStartDownloadsFunc = UpdateManager.startDownloads;
-        UpdateManager.startDownloads = function() {
-          calledToMockStartDownloads = true;
+        var evt = {
+          preventDefault: function() {},
+          type: 'click',
+          target: UpdateManager.downloadViaDataConnectionButton
         };
 
-        var evt = document.createEvent('MouseEvents');
-        evt.initEvent('click', true, true);
-
         UpdateManager.requestDownloads(evt);
-        assert.isTrue(calledToMockStartDownloads);
-        assert.isFalse(UpdateManager._startedDownloadUsingDataConnection);
+        spy.lastCall.returnValue.then(function() {
+          var css = UpdateManager.downloadViaDataConnectionDialog.classList;
+          var titleL10nId =
+            UpdateManager.downloadViaDataConnectionTitle
+            .getAttribute('data-l10n-id');
+          var messageL10nId =
+            UpdateManager.downloadViaDataConnectionMessage
+            .getAttribute('data-l10n-id');
 
-        UpdateManager.startDownloads = realStartDownloadsFunc;
+          assert.isTrue(css.contains('visible'));
+          assert.equal(titleL10nId,
+            'downloadUpdatesViaDataConnection');
+          assert.equal(messageL10nId,
+            'downloadUpdatesViaDataConnectionMessage3');
+        }).then(done, done);
       });
 
       test('should handle cancellation on the data connection warning dialog',
@@ -1289,18 +1358,22 @@ suite('system/UpdateManager', function() {
         assert.isFalse(css.contains('visible'));
       });
 
-      test('should handle confirmation', function() {
+      test('should handle confirmation when using wifi', function() {
         UpdateManager._isDataConnectionWarningDialogEnabled = false;
 
         var evt = document.createEvent('MouseEvents');
         evt.initEvent('click', true, true);
+        var startDownloadsSpy =
+          this.sinon.spy(UpdateManager, 'startDownloads');
 
         UpdateManager.requestDownloads(evt);
         var css = UpdateManager.downloadDialog.classList;
+        assert.ok(startDownloadsSpy.calledOnce,
+          'startDownloads must be called');
         assert.isFalse(css.contains('visible'));
         css = UpdateManager.downloadViaDataConnectionDialog.classList;
         assert.isFalse(css.contains('visible'));
-        assert.isTrue(MockUtilityTray.mShown);
+        assert.isFalse(MockUtilityTray.mShown);
         assert.isTrue(evt.defaultPrevented);
       });
     });

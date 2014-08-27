@@ -28,6 +28,8 @@ var UpdateManager = {
   UPDATE_2G_SETT: 'update.2g.enabled',
   ROAMING_SETTING_KEY: 'ril.data.roaming_enabled',
   DATA_TYPES_NO_ALLOWED: ['edge', 'gprs', '1xrtt', 'is95a', 'is95b'],
+  WIFI_PRIORITIZED: true,
+  WIFI_PRIORITIZED_KEY: 'app.update.wifi-prioritized',
 
   container: null,
   message: null,
@@ -120,18 +122,12 @@ var UpdateManager = {
 
   requestDownloads: function um_requestDownloads(evt) {
     evt.preventDefault();
-
     if (evt.target == this.downloadViaDataConnectionButton) {
       this._startedDownloadUsingDataConnection = true;
       this.startDownloads();
     } else {
-      if (this._dataConnectionWarningEnabled &&
-          this.downloadDialog.dataset.nowifi === 'true') {
-        this._openDownloadViaDataDialog();
-      } else {
-        this._startedDownloadUsingDataConnection = false;
-        this.startDownloads();
-      }
+      //this.checkWifiConnection();
+      this.launchDownload();
     }
   },
 
@@ -197,40 +193,61 @@ var UpdateManager = {
         var update2G =
              reqUpdate.result && reqUpdate.result[self.UPDATE_2G_SETT] || false;
 
-        // If update 2G is available we don't need to know what kind
-        // of connection the phone has
-        if (update2G) {
-          self.showDownloadPrompt();
-        } else {
-          // We can download the update only if the current connection
-          // is not forbidden for download
-          var conns = window.navigator.mozMobileConnections;
-          if (!conns) {
-            console.error('mozMobileConnections is not available we can ' +
-                          'not update the phone.');
-            self.showForbiddenDownload();
+        self.getWifiPrioritized().then(function(prioritized) {
+          // If update 2G is available we don't need to know what kind
+          // of connection the phone has
+          if (update2G) {
+            if (prioritized) {
+              self.showPromptWifiPrioritized();
+              return;
+            }
+            self.showPrompt3GAdditionalCostIfNeeded();
           } else {
+            // We can download the update only if the current connection
+            // is not forbidden for download
+            var conns = window.navigator.mozMobileConnections;
+            if (!conns) {
+              console.error('mozMobileConnections is not available we can ' +
+                            'not update the phone.');
+              self.showForbiddenDownload();
+              return;
+            }
+
             var dataType;
             // In DualSim only one of them will have data active
-            for (var i = 0, iLen = conns.length; i < iLen && !dataType; i++) {
+            for (var i = 0; i < conns.length && !dataType; i++) {
               dataType = conns[i].data.type;
             }
             if (!dataType) {
               console.error('There are not wifi connection nor data ' +
                             'connection. We can not download update');
               self.showForbiddenDownload();
-            } else {
-              if (self.DATA_TYPES_NO_ALLOWED.indexOf(dataType) >= 0) {
-                self.showForbiddenDownload();
-              } else {
-                self.showDownloadPrompt();
-              }
+              return;
             }
+
+            //2G connection
+            if (self.DATA_TYPES_NO_ALLOWED.indexOf(dataType) >= 0) {
+              if (prioritized) {
+                self.showPromptWifiPrioritized(self.showForbiddenDownload);
+                return;
+              }
+              self.showForbiddenDownload();
+              return;
+            }
+
+            //3G connection
+            if (prioritized) {
+              self.showPromptWifiPrioritized();
+              return;
+            }
+            self.showPrompt3GAdditionalCostIfNeeded();
           }
-        }
+        });
       });
     } else {
-      self.showDownloadPrompt();
+      //Wifi connection available
+      this._startedDownloadUsingDataConnection = false;
+      this.startDownloads();
     }
   },
 
@@ -274,11 +291,11 @@ var UpdateManager = {
     };
 
     var systemUpdate = _('systemUpdate');
-    var downloadUpdatesVia2GForbidden2 = _('downloadUpdatesVia2GForbidden2');
+    var downloadUpdatesVia2GForbidden3 = _('downloadUpdatesVia2GForbidden3');
     var screen = document.getElementById('screen');
 
     CustomDialog
-      .show(systemUpdate, downloadUpdatesVia2GForbidden2, ok, null, screen)
+      .show(systemUpdate, downloadUpdatesVia2GForbidden3, ok, null, screen)
       .setAttribute('data-z-index-level', 'system-dialog');
   },
 
@@ -383,6 +400,59 @@ var UpdateManager = {
     CustomDialog.hide();
     this.downloadViaDataConnectionDialog.classList.remove('visible');
     this.downloadDialog.classList.remove('visible');
+  },
+
+  getWifiPrioritized: function um_getWifiPrioritized() {
+    var wifiPrioritized = this.WIFI_PRIORITIZED;
+    var settings = window.navigator.mozSettings;
+    var self = this;
+    var getRequest = settings.createLock().get(this.WIFI_PRIORITIZED_KEY);
+
+    return new Promise(function(resolve, reject) {
+      getRequest.onerror = function() {
+        resolve(wifiPrioritized);
+      };
+      getRequest.onsuccess = function() {
+        var prioritized = getRequest.result[self.WIFI_PRIORITIZED_KEY];
+        if (typeof prioritized !== 'boolean') {
+          prioritized = wifiPrioritized;
+        }
+        resolve(prioritized);
+      };
+    });
+  },
+
+  showPrompt3GAdditionalCostIfNeeded:
+    function um_showPrompt3GAdditionalCostIfNeeded() {
+    this._openDownloadViaDataDialog();
+    CustomDialog.hide();
+  },
+
+  showPromptWifiPrioritized:
+    function um_showPromptWifiPrioritized(downloadCallback) {
+    var _ = navigator.mozL10n.get;
+    if (!downloadCallback) {
+      downloadCallback = this.showPrompt3GAdditionalCostIfNeeded;
+    }
+    var notNow = {
+      title: _('notNow'),
+      callback: this.cancelPrompt.bind(this)
+    };
+
+    var download = {
+      title: _('download'),
+      callback: downloadCallback.bind(this)
+    };
+
+    this.downloadDialog.classList.remove('visible');
+
+    UtilityTray.hide();
+    CustomDialog.show(
+      _('systemUpdate'),
+      _('downloadWifiPrioritized3'),
+      notNow,
+      download
+    );
   },
 
   downloadProgressed: function um_downloadProgress(bytes) {
@@ -702,10 +772,9 @@ var UpdateManager = {
         _(this.downloadViaDataConnectionMessage,
           'downloadUpdatesViaDataRoamingConnectionMessage');
       } else {
-        _(this.downloadViaDataConnectionTitle,
-          'downloadUpdatesViaDataConnection');
-        _(this.downloadViaDataConnectionMessage,
-          'downloadUpdatesViaDataConnectionMessage2');
+        this._startedDownloadUsingDataConnection = true;
+        this.startDownloads();
+        return;
       }
 
       this.downloadViaDataConnectionDialog.classList.add('visible');
