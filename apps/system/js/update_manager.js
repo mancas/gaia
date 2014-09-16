@@ -198,7 +198,8 @@ var UpdateManager = {
           // of connection the phone has
           if (update2G) {
             if (prioritized) {
-              self.showPromptWifiPrioritized();
+              self.showPromptWifiPrioritized(
+                self.showPrompt3GAdditionalCostIfNeeded);
               return;
             }
             self.showPrompt3GAdditionalCostIfNeeded();
@@ -276,26 +277,23 @@ var UpdateManager = {
       )
       .setAttribute('data-z-index-level', 'system-dialog');
     } else {
-      this.launchDownload();
+      this.showDownloadPrompt();
     }
 
     UtilityTray.hide();
   },
 
   showForbiddenDownload: function um_showForbiddenDownload() {
-    var _ = navigator.mozL10n.get;
-
     var ok = {
-      title: _('ok'),
+      title: 'ok',
+      recommend: true,
       callback: this.cancelPrompt.bind(this)
     };
 
-    var systemUpdate = _('systemUpdate');
-    var downloadUpdatesVia2GForbidden3 = _('downloadUpdatesVia2GForbidden3');
     var screen = document.getElementById('screen');
 
     CustomDialog
-      .show(systemUpdate, downloadUpdatesVia2GForbidden3, ok, null, screen)
+      .show('systemUpdate', 'downloadUpdatesVia2GForbidden3', ok, null, screen)
       .setAttribute('data-z-index-level', 'system-dialog');
   },
 
@@ -430,17 +428,17 @@ var UpdateManager = {
 
   showPromptWifiPrioritized:
     function um_showPromptWifiPrioritized(downloadCallback) {
-    var _ = navigator.mozL10n.get;
     if (!downloadCallback) {
       downloadCallback = this.showPrompt3GAdditionalCostIfNeeded;
     }
     var notNow = {
-      title: _('notNow'),
+      title: 'notNow',
       callback: this.cancelPrompt.bind(this)
     };
 
     var download = {
-      title: _('download'),
+      title: 'download',
+      recommend: true,
       callback: downloadCallback.bind(this)
     };
 
@@ -448,8 +446,8 @@ var UpdateManager = {
 
     UtilityTray.hide();
     CustomDialog.show(
-      _('systemUpdate'),
-      _('downloadWifiPrioritized3'),
+      'systemUpdate',
+      'downloadWifiPrioritized3',
       notNow,
       download
     );
