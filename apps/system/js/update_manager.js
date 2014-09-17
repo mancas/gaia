@@ -248,8 +248,8 @@ var UpdateManager = {
       });
     } else {
       //Wifi connection available
-      this._startedDownloadUsingDataConnection = false;
-      this.startDownloads();
+      self._startedDownloadUsingDataConnection = false;
+      self.startDownloads();
     }
   },
 

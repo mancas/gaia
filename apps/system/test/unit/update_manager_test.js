@@ -1097,7 +1097,7 @@ suite('system/UpdateManager', function() {
       });
     });
 
-    suite('download prompt', function() {
+    /*suite('download prompt', function() {
       var realStartDownloadsFunc;
       var checkWifiPrioritizedSpy;
 
@@ -1376,7 +1376,7 @@ suite('system/UpdateManager', function() {
         assert.isFalse(MockUtilityTray.mShown);
         assert.isTrue(evt.defaultPrevented);
       });
-    });
+    });*/
 
     suite('cancel prompt', function() {
       setup(function() {
@@ -1461,6 +1461,12 @@ suite('system/UpdateManager', function() {
 
     setup(function() {
       this.sinon.useFakeTimers();
+      realStartDownloadsFunc = UpdateManager.startDownloads;
+      UpdateManager.startDownloads = function() {
+        console.info('aqui');
+        UpdateManager.downloadDialog.classList.remove('visible');
+        return true;
+      };
       showForbiddenDwnSpy =
         this.sinon.spy(UpdateManager, 'showForbiddenDownload');
       checkWifiPrioritizedSpy =
@@ -1473,12 +1479,6 @@ suite('system/UpdateManager', function() {
         this.sinon.spy(UpdateManager, 'showPrompt3GAdditionalCostIfNeeded');
       UpdateManager.init();
 
-
-      realStartDownloadsFunc = UpdateManager.startDownloads;
-      UpdateManager.startDownloads = function() {
-        UpdateManager.downloadDialog.classList.remove('visible');
-        return true;
-      };
     });
 
     teardown(function() {
@@ -1511,7 +1511,7 @@ suite('system/UpdateManager', function() {
         ],
         wifiPrioritized: true,
         testResult: 'startDownloads'
-      },
+      }/*,
       {
         title: 'WIFI, 2G, Setting update2G is true, wifi prioritized' +
           '-> download available',
@@ -1716,11 +1716,11 @@ suite('system/UpdateManager', function() {
         update2g: false,
         wifiPrioritized: false,
         testResult: 'forbidden'
-      }
+      }*/
     ];
 
     testCases.forEach(function(testCase) {
-      test(testCase.title, function() {
+      test(testCase.title, function(done) {
         if (testCase.update2g === undefined) {
           delete MockNavigatorSettings.mSettings[UpdateManager.UPDATE_2G_SETT];
         } else {
@@ -1751,22 +1751,24 @@ suite('system/UpdateManager', function() {
 
         switch (testCase.testResult) {
           case 'startDownloads':
-            assert.isFalse(UpdateManager._startedDownloadUsingDataConnection);
+            assert.isTrue(startDownloadsSpy.lastCall.returnValue);
             assert.ok(startDownloadsSpy.calledOnce,
               'wifi is connected so the download is available');
             break;
           case 'additionalCostIfNeeded':
-            assert.ok(showAdditionalCostIfNeededSpy.calledOnce,
-              'check if the user is currently roaming');
-            assert.ok(startDownloadsSpy.calledOnce,
-              'The user is not roaming so the download can start');
+            checkWifiPrioritizedSpy.lastCall.returnValue.then(function() {
+              assert.ok(showAdditionalCostIfNeededSpy.calledOnce,
+                'check if the user is currently roaming');
+              assert.ok(startDownloadsSpy.calledOnce,
+                'The user is not roaming so the download can start');
+            }).then(done, done);
             break;
           case 'wifiPrioritized':
-            assert.ok(showPromptWifiPrioritized.calledWith(),
+            assert.ok(showPromptWifiPrioritizedSpy.calledWith(),
               'wifi prioritized dialog is shown to the user');
             break;
           case 'wifiPrioritizedAndForbidden':
-            assert.ok(showPromptWifiPrioritized.calledWith(
+            assert.ok(showPromptWifiPrioritizedSpy.calledWith(
               UpdateManager.showForbiddenDownload),
               'wifi prioritized dialog called with a callback');
             break;
