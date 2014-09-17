@@ -238,7 +238,8 @@ var UpdateManager = {
 
             //3G connection
             if (prioritized) {
-              self.showPromptWifiPrioritized();
+              self.showPromptWifiPrioritized(
+                self.showPrompt3GAdditionalCostIfNeeded);
               return;
             }
             self.showPrompt3GAdditionalCostIfNeeded();

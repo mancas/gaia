@@ -1450,24 +1450,45 @@ suite('system/UpdateManager', function() {
     });
   });
 
-  suite('2G download forbidden', function() {
+  suite('System updates', function() {
 
-    var showDownloadPromptSpy;
     var showForbiddenDwnSpy;
+    var checkWifiPrioritizedSpy;
+    var realStartDownloadsFunc;
+    var startDownloadsSpy;
+    var showPromptWifiPrioritizedSpy;
+    var showAdditionalCostIfNeededSpy;
 
     setup(function() {
       this.sinon.useFakeTimers();
-      showDownloadPromptSpy =
-         this.sinon.spy(UpdateManager, 'showDownloadPrompt');
       showForbiddenDwnSpy =
-         this.sinon.spy(UpdateManager, 'showForbiddenDownload');
+        this.sinon.spy(UpdateManager, 'showForbiddenDownload');
+      checkWifiPrioritizedSpy =
+        this.sinon.spy(UpdateManager, 'getWifiPrioritized');
+      showPromptWifiPrioritizedSpy =
+        this.sinon.spy(UpdateManager, 'showPromptWifiPrioritized');
+      startDownloadsSpy =
+        this.sinon.spy(UpdateManager, 'startDownloads');
+      showAdditionalCostIfNeededSpy =
+        this.sinon.spy(UpdateManager, 'showPrompt3GAdditionalCostIfNeeded');
       UpdateManager.init();
+
+
+      realStartDownloadsFunc = UpdateManager.startDownloads;
+      UpdateManager.startDownloads = function() {
+        UpdateManager.downloadDialog.classList.remove('visible');
+        return true;
+      };
     });
 
     teardown(function() {
       this.sinon.clock.restore();
-      showDownloadPromptSpy.restore();
       showForbiddenDwnSpy.restore();
+      checkWifiPrioritizedSpy.restore();
+      startDownloadsSpy.restore();
+      showPromptWifiPrioritizedSpy.restore();
+      showAdditionalCostIfNeededSpy.restore();
+      UpdateManager.startDownloads = realStartDownloadsFunc;
       navigator.mozWifiManager.connection.status = 'connected';
     });
 
@@ -1476,7 +1497,8 @@ suite('system/UpdateManager', function() {
 
     var testCases = [
       {
-        title: 'WIFI, 2G, no Setting update2G -> download available',
+        title: 'WIFI, 2G, no Setting update2G, wifi prioritized' +
+          '-> download available',
         wifi: true,
         conns: [
           {
@@ -1487,10 +1509,12 @@ suite('system/UpdateManager', function() {
             connected: false
           }
         ],
-        forbiddenDwnload: false
+        wifiPrioritized: true,
+        testResult: 'startDownloads'
       },
       {
-        title: 'WIFI, 2G, Setting update2G is true -> download available',
+        title: 'WIFI, 2G, Setting update2G is true, wifi prioritized' +
+          '-> download available',
         wifi: true,
         conns: [
           {
@@ -1503,10 +1527,12 @@ suite('system/UpdateManager', function() {
         ],
 
         update2g: true,
-        forbiddenDwnload: false
+        wifiPrioritized: true,
+        testResult: 'startDownloads'
       },
       {
-        title: 'WIFI, 2G, Setting update2G is false -> download available',
+        title: 'WIFI, 2G, no Setting update2G, wifi not prioritized' +
+          '-> download available',
         wifi: true,
         conns: [
           {
@@ -1518,40 +1544,47 @@ suite('system/UpdateManager', function() {
           }
         ],
         update2g: false,
-        forbiddenDwnload: false
+        wifiPrioritized: false,
+        testResult: 'startDownloads'
       },
       {
-        title: 'WIFI, 3G, no Setting update2G -> download available',
+        title: 'WIFI, 2G, Setting update2G is true, wifi not prioritized' +
+          '-> download available',
         wifi: true,
         conns: [
           {
-            connected: false
-          },
-          {
-            type: 'evdo0',
-            connected: true
-          }
-        ],
-        forbiddenDwnload: false
-      },
-      {
-        title: 'WIFI, 3G, Setting update2G is true -> download available',
-        wifi: true,
-        conns: [
-          {
-            type: 'evdo0',
+            type: 'gprs',
             connected: true
           },
           {
             connected: false
           }
         ],
-        update2g: true,
-        forbiddenDwnload: false
+        update2g: false,
+        wifiPrioritized: false,
+        testResult: 'startDownloads'
       },
       {
-        title: 'WIFI, 3G, Setting update2G is false -> download available',
+        title: 'WIFI, 3G, Setting update2G is true, wifi not prioritized' +
+          '-> download available',
         wifi: true,
+        conns: [
+          {
+            type: 'gprs',
+            connected: true
+          },
+          {
+            connected: false
+          }
+        ],
+        update2g: false,
+        wifiPrioritized: false,
+        testResult: 'startDownloads'
+      },
+      {
+        title: 'Not WIFI, 3G, no Setting update2G, wifi not prioritized' +
+          '-> download available',
+        wifi: false,
         conns: [
           {
             connected: false
@@ -1562,51 +1595,127 @@ suite('system/UpdateManager', function() {
           }
         ],
         update2g: false,
-        forbiddenDwnload: false
+        wifiPrioritized: false,
+        testResult: 'additionalCostIfNeeded'
       },
       {
-        title: 'no WIFI, 2G, no Setting update2G -> download forbidden',
-        wifi: false,
-        conns: [
-          {
-            type: 'gprs',
-            connected: true
-          },
-          {
-            connected: false
-          }
-        ],
-        forbiddenDwnload: true
-      },
-      {
-        title: 'no WIFI, 2G, Setting update2G is true -> download available',
+        title: 'Not WIFI, 3G, Setting update2G is true, wifi not prioritized' +
+          '-> download available',
         wifi: false,
         conns: [
           {
             connected: false
           },
           {
-            type: 'gprs',
+            type: 'evdo0',
             connected: true
           }
         ],
         update2g: true,
-        forbiddenDwnload: false
+        wifiPrioritized: false,
+        testResult: 'additionalCostIfNeeded'
       },
       {
-        title: 'no WIFI, 2G, Setting update2G is false -> download forbidden',
+        title: 'Not WIFI, 3G, no Setting update2G, wifi prioritized' +
+          '-> download available',
+        wifi: false,
+        conns: [
+          {
+            connected: false
+          },
+          {
+            type: 'evdo0',
+            connected: true
+          }
+        ],
+        update2g: false,
+        wifiPrioritized: true,
+        testResult: 'wifiPrioritized'
+      },
+      {
+        title: 'Not WIFI, 3G, Setting update2G is true, wifi prioritized' +
+          '-> download available',
+        wifi: false,
+        conns: [
+          {
+            type: 'evdo0',
+            connected: false
+          },
+          {
+            connected: true
+          }
+        ],
+        update2g: true,
+        wifiPrioritized: true,
+        testResult: 'wifiPrioritized'
+      },
+      {
+        title: 'Not WIFI, 2G, Setting update2G is true, wifi prioritized' +
+          '-> download available',
         wifi: false,
         conns: [
           {
             type: 'gprs',
-            connected: true
+            connected: false
           },
           {
+            connected: true
+          }
+        ],
+        update2g: true,
+        wifiPrioritized: true,
+        testResult: 'wifiPrioritized'
+      },
+      {
+        title: 'Not WIFI, 2G, Setting update2G is true, wifi not prioritized' +
+          '-> download available',
+        wifi: false,
+        conns: [
+          {
+            type: 'gprs',
             connected: false
+          },
+          {
+            connected: true
+          }
+        ],
+        update2g: true,
+        wifiPrioritized: false,
+        testResult: 'additionalCostIfNeeded'
+      },
+      {
+        title: 'Not WIFI, 2G, no Setting update2G, wifi prioritized' +
+          '-> download not available',
+        wifi: false,
+        conns: [
+          {
+            connected: false
+          },
+          {
+            type: 'gprs',
+            connected: true
           }
         ],
         update2g: false,
-        forbiddenDwnload: true
+        wifiPrioritized: true,
+        testResult: 'wifiPrioritizedAndForbidden'
+      },
+      {
+        title: 'Not WIFI, 2G, no Setting update2G, wifi not prioritized' +
+          '-> download not available',
+        wifi: false,
+        conns: [
+          {
+            connected: false
+          },
+          {
+            type: 'gprs',
+            connected: true
+          }
+        ],
+        update2g: false,
+        wifiPrioritized: false,
+        testResult: 'forbidden'
       }
     ];
 
@@ -1617,6 +1726,13 @@ suite('system/UpdateManager', function() {
         } else {
           MockNavigatorSettings.mSettings[UpdateManager.UPDATE_2G_SETT] =
             testCase.update2g;
+        }
+        if (testCase.wifiPrioritized === undefined) {
+          delete MockNavigatorSettings.
+            mSettings[UpdateManager.WIFI_PRIORITIZED_KEY];
+        } else {
+          MockNavigatorSettings.mSettings[UpdateManager.WIFI_PRIORITIZED_KEY] =
+            testCase.wifiPrioritized;
         }
         navigator.mozWifiManager.connection.status =
           testCase.wifi ? 'connected' : 'disconnected';
@@ -1633,16 +1749,31 @@ suite('system/UpdateManager', function() {
         UpdateManager.launchDownload();
         this.sinon.clock.tick(TINY_TIMEOUT);
 
-        if (testCase.forbiddenDwnload) {
-          assert.ok(showDownloadPromptSpy.notCalled,
-                    'showDownloadPrompt must not be called');
-          assert.ok(showForbiddenDwnSpy.calledOnce,
-                    'showForbiddenDownload must be called');
-        } else {
-          assert.ok(showDownloadPromptSpy.calledOnce,
-                    'showDownloadPrompt must not be called');
-          assert.ok(showForbiddenDwnSpy.notCalled,
-                    'showForbiddenDownload must not be called');
+        switch (testCase.testResult) {
+          case 'startDownloads':
+            assert.isFalse(UpdateManager._startedDownloadUsingDataConnection);
+            assert.ok(startDownloadsSpy.calledOnce,
+              'wifi is connected so the download is available');
+            break;
+          case 'additionalCostIfNeeded':
+            assert.ok(showAdditionalCostIfNeededSpy.calledOnce,
+              'check if the user is currently roaming');
+            assert.ok(startDownloadsSpy.calledOnce,
+              'The user is not roaming so the download can start');
+            break;
+          case 'wifiPrioritized':
+            assert.ok(showPromptWifiPrioritized.calledWith(),
+              'wifi prioritized dialog is shown to the user');
+            break;
+          case 'wifiPrioritizedAndForbidden':
+            assert.ok(showPromptWifiPrioritized.calledWith(
+              UpdateManager.showForbiddenDownload),
+              'wifi prioritized dialog called with a callback');
+            break;
+          case 'forbidden':
+            assert.ok(showForbiddenDwnSpy.calledOnce,
+              'forbidden download');
+            break;
         }
       });
     });
