@@ -7,7 +7,7 @@ define(function(require) {
   var SettingsPanel = require('modules/settings_panel');
   var Hotspot = require('panels/hotspot/hotspot');
   var HotspotSettings =
-    require('panels/hotspot_wifi_settings/hotspot_settings');
+    require('panels/hotspot/hotspot_settings');
 
   return function ctor_hotspot() {
     var elements;
@@ -124,13 +124,13 @@ define(function(require) {
       _onWifiHotspotChange: function(event) {
         var checkbox = event.target;
         hotspot.checkIncompatibleSettings(
-          hotspot.tetheringUsbKey, checkbox.checked);
+          hotspot.tetheringWifiKey, checkbox.checked);
       },
 
       _onUsbHotspotChange: function(event) {
         var checkbox = event.target;
         hotspot.checkIncompatibleSettings(
-          hotspot.tetheringWifiKey, checkbox.checked);
+          hotspot.tetheringUsbKey, checkbox.checked);
       },
 
       _onHotspotSettingsClick: function() {

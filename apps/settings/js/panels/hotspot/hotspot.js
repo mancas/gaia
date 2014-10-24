@@ -198,6 +198,7 @@ define(function(require) {
             this._incompatibleSettings(this.tetheringWifiKey,
               this.tetheringUsbKey, false);
           } else {
+            console.info(value);
             this._setWifiTetheringSetting(value);
           }
           break;
