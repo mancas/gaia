@@ -845,7 +845,6 @@ var CallLog = {
       }
     };
 
-
     ConfirmDialog.show(null, msg, noObject, yesObject);
   },
 

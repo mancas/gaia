@@ -42,19 +42,19 @@ var ConfirmDialog = (function() {
     action1Node.onclick = null;
     action2Node.removeAttribute('data-l10n-id');
     action2Node.onclick = null;
-    screen.classList.remove('fade-in');
-    screen.classList.add('fade-out');
+    screen.classList.remove('visible');
     isAnimationPlaying = true;
     // Custom event that can be used to apply (screen reader) visibility
     // changes.
     window.dispatchEvent(new CustomEvent('confirmdialoghiding'));
-    screen.addEventListener('animationend', function cd_fadeOut(ev) {
+    screen.addEventListener('transitionend', function cd_fadeOut(ev) {
+      if (ev.target !== screen) {
+        return;
+      }
       action1Node.className = '';
       action2Node.className = '';
       isAnimationPlaying = false;
-      screen.removeEventListener('animationend', cd_fadeOut);
-      screen.classList.add('no-opacity');
-      screen.classList.add('hide');
+      screen.removeEventListener('transitionend', cd_fadeOut);
       isShown = false;
     });
   };
@@ -138,17 +138,17 @@ var ConfirmDialog = (function() {
       return;
     }
 
-    screen.classList.remove('hide');
-    screen.classList.remove('fade-out');
-    screen.classList.add('fade-in');
+    screen.classList.add('visible');
     isAnimationPlaying = true;
     // Custom event that can be used to apply (screen reader) visibility
     // changes.
     window.dispatchEvent(new CustomEvent('confirmdialogshowing'));
-    screen.addEventListener('animationend', function cd_fadeIn(ev) {
+    screen.addEventListener('transitionend', function cd_fadeIn(ev) {
+      if (ev.target !== screen) {
+        return;
+      }
       isAnimationPlaying = false;
-      screen.removeEventListener('animationend', cd_fadeIn);
-      screen.classList.remove('no-opacity');
+      screen.removeEventListener('transitionend', cd_fadeIn);
       isShown = true;
     });
   };
@@ -167,9 +167,12 @@ var ConfirmDialog = (function() {
         return;
       }
 
-      screen.addEventListener('animationend',
+      screen.addEventListener('transitionend',
         function cd_hideWhenFinished(ev) {
-          screen.removeEventListener('animationend', cd_hideWhenFinished);
+          if (ev.target !== screen) {
+            return;
+          }
+          screen.removeEventListener('transitionend', cd_hideWhenFinished);
           _hide();
         }
       );
@@ -190,9 +193,12 @@ var ConfirmDialog = (function() {
         return;
       }
 
-      screen.addEventListener('animationend',
+      screen.addEventListener('transitionend',
         function cd_showWhenFinished(ev) {
-          screen.removeEventListener('animationend', cd_showWhenFinished);
+          if (ev.target !== screen) {
+            return;
+          }
+          screen.removeEventListener('transitionend', cd_showWhenFinished);
           _show(title, msg, action1, action2, options);
         }
       );
