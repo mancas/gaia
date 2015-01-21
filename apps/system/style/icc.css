@@ -28,16 +28,40 @@
 
 #icc-view > section > form,
 #icc-view > section > p {
-  position: absolute;
   width: calc(100% - 4rem);
   height: 27rem;
   padding: 0 2rem;
   overflow: scroll;
-  top: 8rem;
 }
 #icc-view p {
   color: black;
   white-space: pre-line;
+}
+
+#icc-view > section p.stk-text-center {
+  text-align: center;
+}
+
+#icc-view > section p.stk-center-vertically {
+  position: absolute;
+  margin: 0;
+  top: 50%;
+  height: auto;
+  transform: translate(0, -50%);
+}
+
+#icc-view > section p.stk-center-vertically canvas {
+  display: block;
+  margin: auto;
+  margin-bottom: 2rem;
+}
+
+#icc-view > section p.stk-center-vertically canvas:last-of-type {
+  margin-bottom: 0;
+}
+
+#icc-view > section > p > canvas {
+  vertical-align: text-top;
 }
 
 #icc-input menu button:first-child,

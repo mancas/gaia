@@ -285,9 +285,17 @@
             menuItem.identifier);
       var nextActionString = getNextActionString(menu.entries.nextActionList,
         index);
+      // Get the first icon if exists
+      var icon = menuItem.icons && menuItem.icons.length > 0 ?
+        menuItem.icons[0] : null;
+      if (icon) {
+        iccStkList.dataset.customIcon = true;
+      }
+
       DUMP('STK NEXTACTION: ' + nextActionString);
       iccStkList.appendChild(buildMenuEntry({
         id: 'stk-menuitem-' + menuItem.identifier,
+        icon: icon,
         text: menuItem.text,
         nai: _(nextActionString),
         onclick: onMainMenuItemClick,
@@ -338,9 +346,15 @@
     menu.entries.items.forEach(function(menuItem) {
       DUMP('STK Main App Help item: ' + menuItem.text + ' # ' +
             menuItem.identifier);
+      var icon = menuItem.icons && menuItem.icons.length > 0 ?
+        menuItem.icons[0] : null;
+      if (icon) {
+        iccStkList.dataset.customIcon = true;
+      }
       iccStkList.appendChild(buildMenuEntry({
         id: 'stk-helpitem-' + menuItem.identifier,
         text: menuItem.text,
+        icon: icon,
         onclick: onMainMenuHelpItemClick,
         attributes: [
           ['stk-help-item-identifier', menuItem.identifier],
@@ -382,9 +396,15 @@
         menuItem.identifier);
       var nextActionString = getNextActionString(menu.nextActionList, index);
       DUMP('STK NEXTACTION: ' + nextActionString);
+      var icon = menuItem.icons && menuItem.icons.length > 0 ?
+        menuItem.icons[0] : null;
+      if (icon) {
+        iccStkList.dataset.customIcon = true;
+      }
       iccStkList.appendChild(buildMenuEntry({
         id: 'stk-menuitem-' + menuItem.identifier,
         text: menuItem.text,
+        icon: icon,
         nai: _(nextActionString),
         onclick: function onSelectOptionClick(event) {
           document.removeEventListener('visibilitychange',
@@ -433,9 +453,15 @@
     menu.items.forEach(function(menuItem) {
       DUMP('STK Main App Help item: ' + menuItem.text + ' # ' +
             menuItem.identifier);
+      var icon = menuItem.icons && menuItem.icons.length > 0 ?
+        menuItem.icons[0] : null;
+      if (icon) {
+        iccStkList.dataset.customIcon = true;
+      }
       iccStkList.appendChild(buildMenuEntry({
         id: 'stk-helpitem-' + menuItem.identifier,
         text: menuItem.text,
+        icon: icon,
         onclick: function onSelectOptionClick(event) {
           onSelectionHelpItemClick(message, event);
         },
@@ -498,6 +524,11 @@
       var small = document.createElement('small');
       small.textContent = entry.nai;
       li.appendChild(small);
+    }
+
+    if (entry.icon && STKHelper) {
+      li.appendChild(STKHelper.getIconCanvas(entry.icon,
+        STKHelper.LIST_ICON_WIDTH, STKHelper.LIST_ICON_HEIGHT));
     }
 
     var a = document.createElement('a');

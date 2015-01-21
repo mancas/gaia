@@ -333,7 +333,7 @@ var icc = {
     this.icc_view.style.height = height + 'px';
   },
 
-  alert: function icc_alert(stkMessage, message) {
+  alert: function icc_alert(stkMessage, message, icons) {
     if (!this.icc_alert) {
       this.icc_alert = document.getElementById('icc-alert');
       this.icc_alert_subtitle = document.getElementById('icc-alert-subtitle');
@@ -341,6 +341,9 @@ var icc = {
       this.icc_alert_btn = document.getElementById('icc-alert-btn');
       this.setupView(this.icc_alert);
     }
+
+    // Clear previous icons
+    this.icc_alert_msg.innerHTML = '';
 
     navigator.mozL10n.setAttributes(
       this.icc_alert_subtitle,
@@ -353,7 +356,11 @@ var icc = {
       self.hideViews();
     };
 
-    this.icc_alert_msg.textContent = message;
+    if (icons) {
+      this.drawMessageIcons(this.icc_alert_msg, icons);
+    }
+
+    this.addMessageTextIfNeeded(this.icc_alert_msg, message);
     this._screen.classList.add('icc');
     this.icc_alert.classList.add('visible');
     this.icc_view.classList.add('visible');
@@ -362,7 +369,7 @@ var icc = {
   /**
    * callback responds with "userCleared"
    */
-  confirm: function(stkMessage, message, timeout, callback) {
+  confirm: function(stkMessage, message, icons, timeout, callback) {
     if (!this.icc_confirm) {
       this.icc_confirm = document.getElementById('icc-confirm');
       this.icc_confirm_subtitle =
@@ -375,6 +382,9 @@ var icc = {
         document.getElementById('icc-confirm-btn_close');
       this.setupView(this.icc_confirm);
     }
+
+    // Clear previous icons
+    this.icc_confirm_msg.innerHTML = '';
 
     if (typeof callback != 'function') {
       callback = function() {};
@@ -416,13 +426,17 @@ var icc = {
       callback(true);
     };
 
-    this.icc_confirm_msg.textContent = message;
+    if (icons) {
+      this.drawMessageIcons(this.icc_confirm_img, icons);
+    }
+
+    this.addMessageTextIfNeeded(this.icc_confirm_msg, message);
     this._screen.classList.add('icc');
     this.icc_confirm.classList.add('visible');
     this.icc_view.classList.add('visible');
   },
 
-  asyncConfirm: function(stkMessage, message, callback) {
+  asyncConfirm: function(stkMessage, message, icons, callback) {
     if (typeof callback != 'function') {
       callback = function() {};
     }
@@ -439,6 +453,9 @@ var icc = {
         document.getElementById('icc-asyncconfirm-btn-yes');
       this.setupView(this.icc_asyncconfirm);
     }
+
+    // Clear previous icons
+    this.icc_asyncconfirm_msg.innerHTML = '';
 
     navigator.mozL10n.setAttributes(
       this.icc_asyncconfirm_subtitle,
@@ -466,7 +483,11 @@ var icc = {
       callback(true);
     };
 
-    this.icc_asyncconfirm_msg.textContent = message;
+    if (icons) {
+      this.drawMessageIcons(this.icc_asyncconfirm_msg, icons);
+    }
+
+    this.addMessageTextIfNeeded(this.icc_asyncconfirm_msg, message);
     this._screen.classList.add('icc');
     this.icc_asyncconfirm.classList.add('visible');
     this.icc_view.classList.add('visible');
@@ -475,7 +496,7 @@ var icc = {
   /**
    * Open URL
    */
-  showURL: function(stkMessage, url, confirmMessage) {
+  showURL: function(stkMessage, url, icons, confirmMessage) {
     function openURL(url) {
       // Sanitise url just in case it doesn't start with http or https
       // the web activity won't work, so add by default the http protocol
@@ -494,7 +515,7 @@ var icc = {
     DUMP('Final URL to open: ' + url);
     if (url != null || url.length != 0) {
       if (confirmMessage) {
-        this.asyncConfirm(stkMessage, confirmMessage, function(res) {
+        this.asyncConfirm(stkMessage, confirmMessage, icons, function(res) {
           if (res) {
             openURL(url);
           }
@@ -505,7 +526,7 @@ var icc = {
     }
   },
 
-  input: function(stkMessage, message, timeout, options, callback) {
+  input: function(stkMessage, message, icons, timeout, options, callback) {
     var self = this;
     var timeoutId = null;
     /**
@@ -574,6 +595,9 @@ var icc = {
       this.icc_input_btn_help = document.getElementById('icc-input-btn_help');
       this.setupView(this.icc_input);
     }
+
+    // Clear previous icons
+    this.icc_input_msg.innerHTML = '';
 
     if (typeof callback != 'function') {
       callback = function() {};
@@ -650,8 +674,12 @@ var icc = {
       };
     }
 
+    if (icons) {
+      this.drawMessageIcons(this.icc_input_msg, icons);
+    }
+
     this.icc_input_box.value = '';
-    this.icc_input_msg.textContent = message;
+    this.addMessageTextIfNeeded(this.icc_input_msg, message, true);
     this._screen.classList.add('icc');
     this.icc_input.classList.add('visible');
     this.icc_view.classList.add('visible');
@@ -704,6 +732,28 @@ var icc = {
     }
 
     this._currentMessage = new_message;
+  },
+
+  drawMessageIcons: function(container, icons) {
+    for (var i = 0; i < icons.length; i++) {
+      container.appendChild(STKHelper.getIconCanvas(icons[i]));
+    }
+  },
+
+  addMessageTextIfNeeded: function(container, message, notAlignVertically) {
+    if (!message) {
+      container.classList.add('stk-text-center');
+      if (!notAlignVertically) {
+        container.classList.add('stk-center-vertically');
+      }
+      return;
+    } else {
+      container.classList.remove('stk-text-center', 'stk-center-vertically');
+    }
+
+    var span = document.createElement('span');
+    span.textContent = message;
+    container.appendChild(span);
   }
 };
 

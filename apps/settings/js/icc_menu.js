@@ -72,11 +72,20 @@
 
         var li = document.createElement('li');
         var a = document.createElement('a');
+        var commandIcons = menu[SIMNumber].entries.icons;
+        var icon = commandIcons && commandIcons.length > 0 ?
+          commandIcons[0] : null;
 
         a.id = 'menuItem-icc-' + menu[SIMNumber].iccId;
         a.className = 'menu-item menuItem-icc';
         a.href = '#icc';
-        a.dataset.icon = 'sim-toolkit';
+        if (icon && STKHelper) {
+          li.appendChild(STKHelper.getIconCanvas(icon,
+            STKHelper.LIST_ICON_WIDTH, STKHelper.LIST_ICON_HEIGHT));
+          iccEntries.dataset.customIcon = true;
+        } else {
+          a.dataset.icon = 'sim-toolkit';
+        }
         a.onclick = function menu_icc_onclick() {
           DUMP('Touched ' + menu[SIMNumber].iccId);
           loadIccPage(function() {

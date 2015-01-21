@@ -20,9 +20,14 @@ var icc_worker = {
   },
 
   // Helper to retrieve text from MozStkTextMessage
-  _retrieveText: function icc_worker_retrieve_text(stkMessage) {
-    return (typeof stkMessage === 'string' || stkMessage instanceof String) ?
-      stkMessage : ((stkMessage) ? stkMessage.text : null);
+  _retrieveText: function icc_worker_retrieve_text(stkMessage,
+    iconSelfExplanatory) {
+      if (iconSelfExplanatory) {
+        return '';
+      }
+
+      return (typeof stkMessage === 'string' || stkMessage instanceof String) ?
+        stkMessage : ((stkMessage) ? stkMessage.text : null);
   },
 
   // STK_CMD_REFRESH
@@ -70,7 +75,8 @@ var icc_worker = {
     DUMP('STK_CMD_SET_UP_CALL:', message.command.options);
     var options = message.command.options;
 
-    var confirmMessage = this._retrieveText(options.confirmMessage);
+    var confirmMessage = this._retrieveText(options.confirmMessage,
+      options.iconSelfExplanatory);
     var callMessage = this._retrieveText(options.callMessage);
 
     icc.discardCurrentMessageIfNeeded(message);
@@ -82,7 +88,10 @@ var icc_worker = {
         });
     }
     if (confirmMessage) {
-      icc.asyncConfirm(message, confirmMessage,
+      if (options.iconSelfExplanatory) {
+        confirmMessage = '';
+      }
+      icc.asyncConfirm(message, confirmMessage, options.icons,
         function(confirmed) {
           stkSetupCall(confirmed, callMessage);
         });
@@ -98,11 +107,15 @@ var icc_worker = {
 
     icc.discardCurrentMessageIfNeeded(message);
 
-    if (!options.text) {
+    var text = options.text;
+    if (!text && !options.iconSelfExplanatory) {
       var _ = navigator.mozL10n.get;
-      options.text = _('icc-alertMessage-send-ss');
+      text = _('icc-alertMessage-send-ss');
+    } else if (options.iconSelfExplanatory) {
+      text = '';
     }
-    icc.alert(message, options.text);
+
+    icc.alert(message, text, options.icons);
   },
 
   // STK_CMD_SEND_USSD
@@ -124,11 +137,19 @@ var icc_worker = {
 
     icc.discardCurrentMessageIfNeeded(message);
 
-    if (options.text) {
-      icc.confirm(message, options.text);
-    } else if (options.text !== undefined) {
+    var text = options.text;
+    if (text) {
+      if (options.iconSelfExplanatory) {
+        text = '';
+      }
+      icc.confirm(message, text, options.icons);
+    } else if (text !== undefined) {
       var _ = navigator.mozL10n.get;
-      icc.alert(message, _('icc-alertMessage-send-sms'));
+
+      if (!options.iconSelfExplanatory) {
+        text = _('icc-alertMessage-send-sms');
+      }
+      icc.alert(message, text, options.icons);
     }
   },
 
@@ -139,12 +160,15 @@ var icc_worker = {
 
     icc.discardCurrentMessageIfNeeded(message);
 
-    if (options.text) {
-      icc.alert(message, options.text);
-    } else if (options.text === '') {
+    var text = options.text;
+    if (!text && !options.iconSelfExplanatory) {
       var _ = navigator.mozL10n.get;
-      icc.alert(message, _('icc-confirmMessage-defaultmessage'));
+      text = _('icc-confirmMessage-defaultmessage');
+    } else if (options.iconSelfExplanatory) {
+      text = '';
     }
+
+    icc.alert(message, text, options.icons);
   },
 
   // STK_CMD_LAUNCH_BROWSER
@@ -159,8 +183,8 @@ var icc_worker = {
     icc.responseSTKCommand(message, {
       resultCode: icc._iccManager.STK_RESULT_OK
     });
-    icc.showURL(message, options.url,
-      this._retrieveText(options.confirmMessage));
+    icc.showURL(message, options.url, options.icons,
+      this._retrieveText(options.confirmMessage, options.iconSelfExplanatory));
   },
 
   // STK_CMD_PLAY_TONE
@@ -221,7 +245,11 @@ var icc_worker = {
     timeout && DUMP('Tone stop in (ms): ', timeout);
 
     if (options.text) {
-      icc.confirm(message, options.text, timeout, function(userCleared) {
+      var text = options.text;
+      if (options.iconSelfExplanatory) {
+        text = '';
+      }
+      icc.confirm(message, text, options.icons, timeout, function(userCleared) {
         tonePlayer.pause();
         if (userCleared == null) {  // Back && Terminate
           return;
@@ -269,6 +297,11 @@ var icc_worker = {
       return;
     }
 
+    var text = options.text;
+    if (options.iconSelfExplanatory) {
+      text = '';
+    }
+
     var timeout = icc._displayTextTimeout;
     var duration = options.duration;
     if (duration && duration.timeUnit !== undefined &&
@@ -281,9 +314,9 @@ var icc_worker = {
       icc.responseSTKCommand(message, {
         resultCode: icc._iccManager.STK_RESULT_OK
       });
-      icc.confirm(message, options.text, timeout, null);
+      icc.confirm(message, text, options.icons, timeout, null);
     } else {
-      icc.confirm(message, options.text, timeout,
+      icc.confirm(message, text, options.icons, timeout,
         function(userCleared) {
           if (userCleared == null) {
             return;   // ICC Back or ICC Terminate
@@ -324,7 +357,8 @@ var icc_worker = {
     var timeout = (duration &&
       icc.calculateDurationInMS(duration.timeUnit, duration.timeInterval)) ||
       icc._inputTimeout;
-    icc.input(message, options.text, timeout, options,
+    var text = options.iconSelfExplanatory ? '' : options.text;
+    icc.input(message, text, options.icons, timeout, options,
       function(response, value) {
         if (response == null) {
           return;   // ICC Back or ICC Help
@@ -574,7 +608,11 @@ var icc_worker = {
     this.idleTextNotifications[message.iccId].onclick =
       function onClickSTKNotification() {
         icc.discardCurrentMessageIfNeeded(message);
-        icc.alert(message, options.text);
+        var text = options.text;
+        if (options.iconSelfExplanatory) {
+          text = '';
+        }
+        icc.alert(message, text, options.icons);
       };
     this.idleTextNotifications[message.iccId].onshow =
       function onShowSTKNotification() {
