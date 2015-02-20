@@ -69,7 +69,9 @@ function init() {
       speakerManager.speakerforced);
   };
 
-  mozFMRadio.onfrequencychange = UIManager.updateFreqUI;
+  mozFMRadio.onfrequencychange = function() {
+    UIManager.updateFreqUI();
+  };
   mozFMRadio.onenabled = function() {
     UIManager.updateEnablingState(false);
   };
@@ -110,7 +112,7 @@ function init() {
       else
         UIManager.enableFMRadio(mozFMRadio.frequencyLowerBound);
 
-      FavoritesList.init(UIManager.updateFreqUI);
+      FavoritesList.init(UIManager.updateFreqUI.bind(UIManager));
     } else {
       // Mark the previous state as True,
       // so the FM radio be enabled automatically
