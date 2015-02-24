@@ -207,7 +207,7 @@ function updateEnablingState(enablingState) {
   updateFrequencyBarUI();
 }
 
-var airplaneModeEnabled = false;
+var airplaneModeEnabled;
 function enableFMRadio(frequency) {
   if (airplaneModeEnabled)
     return;
@@ -836,11 +836,6 @@ function init() {
   // Disable the power button and the fav list when the airplane mode is on.
   updateAirplaneModeUI();
 
-  AirplaneModeHelper.addEventListener('statechange', function(status) {
-    airplaneModeEnabled = status === 'enabled';
-    updateAirplaneModeUI();
-  });
-
   // Load the fav list and enable the FM radio if an antenna is available.
   historyList.init(function hl_ready() {
     if (mozFMRadio.antennaAvailable) {
@@ -882,7 +877,7 @@ function init() {
   // ought to be a better way, but this is a quick and easy way to
   // fix a last-minute release blocker.
   //
-  navigator.mozSettings.addObserver(
+  /*navigator.mozSettings.addObserver(
     'private.broadcast.attention_screen_opening',
     function(event) {
       // An attention screen is in the process of opening. Save the
@@ -910,11 +905,16 @@ function init() {
         }
       }
     }
-  );
+  );*/
+}
+
+function onAirplaneModeChange(settingValue) {
+  airplaneModeEnabled = settingValue;
+  updateAirplaneModeUI();
 }
 
 window.addEventListener('load', function(e) {
-  AirplaneModeHelper.ready(function() {
+  /*AirplaneModeHelper.ready(function() {
     airplaneModeEnabled = AirplaneModeHelper.getStatus() == 'enabled';
     init();
 
@@ -937,7 +937,11 @@ window.addEventListener('load', function(e) {
     // "above-the-fold" content.
     window.performance.mark('contentInteractive');
     window.dispatchEvent(new CustomEvent('moz-content-interactive'));
-  });
+  });*/
+  window.SettingService.observe('airplaneMode.enabled', false,
+    onAirplaneModeChange);
+
+  init();
 }, false);
 
 // Turn off radio immediately when window is unloaded.

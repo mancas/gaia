@@ -11,9 +11,14 @@
     "themeable":{},
     "storage":{},
     "fmradio":{},
-    "settings":{ "access": "readonly" },
     "speaker-control":{},
     "audio-channel-content":{}
+  },
+  "connections": {
+    "appsettingrequired": {
+      "description": "Communicate between Settings app and other installed apps.",
+      "rules": {}
+    }
   },
   "locales": {
     "ar": {
