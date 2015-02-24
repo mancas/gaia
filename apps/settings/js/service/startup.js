@@ -8,8 +8,8 @@
 
   SettingService.prototype = {
     onConnection: function ss_onConnection(connectionRequest) {
-      if (connectionRequest.keyword !== 'appSettingRequired') {
-        window.DUMP('Invalid received message. Expected "appSettingRequired",' +
+      if (connectionRequest.keyword !== 'appsettingrequired') {
+        window.DUMP('Invalid received message. Expected "appsettingrequired",' +
           ' got "' + connectionRequest.keyword + '"');
         return;
       }
@@ -20,7 +20,7 @@
     },
 
     handleRequest: function ss_handleRequest(evt) {
-      if (!evt.data.type || !evt.data.key) {
+      if (!evt.data.type || !evt.data.settingKey) {
         window.DUMP('Message received bad formed');
         return;
       }
@@ -32,16 +32,25 @@
 
     get: function ss_get(data) {
       var lock = this.mozSettings.createLock();
-      var request = lock.get(data.key);
+      var request = lock.get(data.settingKey);
 
       request.onsuccess = function() {
-        window.DUMP('Get setting value success: ' + request.result[data.key]);
-        this.respondRequest(request.result[data.key]);
+        window.DUMP('Get setting value success: ' +
+          request.result[data.settingKey]);
+        this.respondRequest({
+          type: 'get',
+          settingKey: data.settingKey,
+          value: request.result[data.settingKey]
+        });
       }.bind(this);
 
       request.onerror = function() {
         window.DUMP('Something went wrong');
-        this.respondRequest(false);
+        this.respondRequest({
+          type: 'get',
+          settingKey: data.settingKey,
+          value: false
+        });
       }.bind(this);
     },
 
@@ -53,24 +62,33 @@
 
       var lock = this.mozSettings.createLock();
       var cset = {};
-      cset[data.key] = data.value;
+      cset[data.settingKey] = data.value;
       var request = lock.set(cset);
 
       request.onsuccess = function() {
         window.DUMP('Update setting value success');
-        this.respondRequest(true);
+        this.respondRequest({
+          type: 'set',
+          settingKey: data.settingKey,
+          result: true
+        });
       }.bind(this);
 
       request.onerror = function() {
         window.DUMP('Something went wrong');
-        this.respondRequest(false);
+        this.respondRequest({
+          type: 'set',
+          settingKey: data.settingKey,
+          result: false
+        });
       }.bind(this);
     },
 
     respondRequest: function ss_respondRequest(response) {
+      window.DUMP('response: ' + response);
       navigator.mozApps.getSelf().onsuccess = function(evt) {
         var app = evt.target.result;
-        app.connect('appSettingRequired').then(function onConnAccepted(ports) {
+        app.connect('appsettingrequired').then(function onConnAccepted(ports) {
           window.DUMP('AppSettingRequired IAC: ' + ports);
           ports.forEach(function(port) {
             window.DUMP('AppSettingRequired IAC: ' + port);

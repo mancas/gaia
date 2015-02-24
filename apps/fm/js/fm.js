@@ -207,7 +207,7 @@ function updateEnablingState(enablingState) {
   updateFrequencyBarUI();
 }
 
-var airplaneModeEnabled = false;
+var airplaneModeEnabled;
 function enableFMRadio(frequency) {
   if (airplaneModeEnabled)
     return;
@@ -835,7 +835,7 @@ function init() {
 
   // Disable the power button and the fav list when the airplane mode is on.
   updateAirplaneModeUI();
-
+//TODOOO
   AirplaneModeHelper.addEventListener('statechange', function(status) {
     airplaneModeEnabled = status === 'enabled';
     updateAirplaneModeUI();
@@ -940,36 +940,70 @@ window.addEventListener('load', function(e) {
   });*/
 
   navigator.mozSetMessageHandler('connection', function(connectionRequest) {
-    if (connectionRequest.keyword !== 'appSettingRequired') {
-      console.error('Invalid received message. Expected "appSettingRequired",' +
+    if (connectionRequest.keyword !== 'appsettingrequired') {
+      console.error('Invalid received message. Expected "appsettingrequired",' +
         ' got "' + connectionRequest.keyword + '"');
       return;
     }
 
     var port = connectionRequest.port;
-    port.onmessage = handleResponse();
+    port.onmessage = handleResponse;
     port.start();
   });
 
-  function handleResponse(data) {
-    if (!data) {
-      console.error('Something went wrong: ' + data);
+  function handleResponse(evt) {
+    if (!evt || !evt.data.type) {
+      console.error('Something went wrong: ' + evt);
       return;
     }
+console.info(evt.data.type);
+    switch (evt.data.type) {
+      case 'get':
+        handleGetSetting(evt.data);
+        break;
+      case 'set':
+        handleSetSetting(evt.data);
+        break;
+      case 'observer':
+        handleObserveSetting(evt.data);
+        break;
+    }
+  }
 
-    airplaneModeEnabled = data;
-    init();
+  function handleGetSetting(data) {
+    console.info(data.settingKey);
+    switch (data.settingKey) {
+      case 'airplaneMode.status':
+        airplaneModeEnabled = !data.value;
+        init();
+        break;
+    }
+  }
+
+  function handleSetSetting(data) {
+
+  }
+
+  function handleObserveSetting(data) {
+    switch (data.settingKey) {
+      case 'airplaneMode.status':
+        // For the first time init
+        if (typeof(airplaneModeEnabled) === 'undefined')
+          init();
+        airplaneModeEnabled = !data.value;
+        break;
+    }
   }
 
   navigator.mozApps.getSelf().onsuccess = function(evt) {
     var app = evt.target.result;
-    app.connect('appSettingRequired').then(function onConnAccepted(ports) {
+    app.connect('appsettingrequired').then(function onConnAccepted(ports) {
       console.info('AppSettingRequired IAC: ' + ports);
       ports.forEach(function(port) {
         console.info('AppSettingRequired IAC: ' + port);
         port.postMessage({
           type: 'get',
-          key: 'airplaneMode.status'
+          settingKey: 'airplaneMode.status'
         });
       });
     }, function onConnRejected(reason) {
