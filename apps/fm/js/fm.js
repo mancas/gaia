@@ -914,7 +914,7 @@ function init() {
 }
 
 window.addEventListener('load', function(e) {
-  AirplaneModeHelper.ready(function() {
+  /*AirplaneModeHelper.ready(function() {
     airplaneModeEnabled = AirplaneModeHelper.getStatus() == 'enabled';
     init();
 
@@ -937,7 +937,46 @@ window.addEventListener('load', function(e) {
     // "above-the-fold" content.
     window.performance.mark('contentInteractive');
     window.dispatchEvent(new CustomEvent('moz-content-interactive'));
+  });*/
+
+  navigator.mozSetMessageHandler('connection', function(connectionRequest) {
+    if (connectionRequest.keyword !== 'appSettingRequired') {
+      console.error('Invalid received message. Expected "appSettingRequired",' +
+        ' got "' + connectionRequest.keyword + '"');
+      return;
+    }
+
+    var port = connectionRequest.port;
+    port.onmessage = handleResponse();
+    port.start();
   });
+
+  function handleResponse(data) {
+    if (!data) {
+      console.error('Something went wrong: ' + data);
+      return;
+    }
+
+    airplaneModeEnabled = data;
+    init();
+  }
+
+  navigator.mozApps.getSelf().onsuccess = function(evt) {
+    var app = evt.target.result;
+    app.connect('appSettingRequired').then(function onConnAccepted(ports) {
+      console.info('AppSettingRequired IAC: ' + ports);
+      ports.forEach(function(port) {
+        console.info('AppSettingRequired IAC: ' + port);
+        port.postMessage({
+          type: 'get',
+          key: 'airplaneMode.status'
+        });
+      });
+    }, function onConnRejected(reason) {
+      console.info('AppSettingRequired IAC is rejected');
+      console.info(reason);
+    });
+  };
 }, false);
 
 // Turn off radio immediately when window is unloaded.
