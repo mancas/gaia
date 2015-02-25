@@ -6,9 +6,12 @@
     navigator.mozSetMessageHandler('connection', this.onConnection.bind(this));
     this.mozSettings = window.navigator.mozSettings;
     this.handleAirplaneModeChange = this.onAirplaneModeChange.bind(this);
+    this.handleSettingChange = this.onSettingChange.bind(this);
   }
 
   SettingService.prototype = {
+    _observers: [],
+
     onConnection: function ss_onConnection(connectionRequest) {
       if (connectionRequest.keyword !== 'appsettingrequired') {
         window.DUMP('Invalid received message. Expected "appsettingrequired",' +
@@ -84,6 +87,50 @@
           result: false
         });
       }.bind(this);
+    },
+
+    observe: function ss_observe(data) {
+      if (!this.mozSettings) {
+        window.setTimeout(function() {
+          this.handleSettingChange(data.defaultValue);
+        });
+        return;
+      }
+
+      var request = this.mozSettings.createLock().get(data.settingKey);
+
+      request.onsuccess = function() {
+        var value = typeof(request.result[data.settingKey]) != 'undefined' ?
+          request.result[data.settingKey] : data.defaultValue;
+        this.handleSettingChang(data.settingKey, value);
+      };
+
+      var settingChanged = function settingChanged(evt) {
+        this.handleSettingChange(data.settingKey, evt.settingValue);
+      };
+      this.mozSettings.addObserver(data.settingKey, settingChanged);
+      this._observers.push({
+        name: data.settingKey,
+        callback: this.handleSettingChange,
+        observer: settingChanged
+      });
+    },
+
+    unobserve: function ss_unobserve(data) {
+      this._observers.forEach(function(value, index) {
+        if (value.name === data.settingKey) {
+          this.mozSettings.removeObserver(name, value.observer);
+          this._observers.splice(index, 1);
+        }
+      }.bind(this));
+    },
+
+    onSettingChange: function ss_onSettingChange(settingKey, settingValue) {
+      this.respondRequest({
+        type: 'observe',
+        settingKey: settingKey,
+        value: settingValue
+      });
     },
 
     observeAirplaneMode: function ss_observeAirplaneMode(data) {
