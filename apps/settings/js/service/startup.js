@@ -1,6 +1,8 @@
 'use strict';
 /* global AirplaneModeHelper */
 
+/* This service is used to offer settings to privileged apps. */
+
 (function (exports) {
   function SettingService() {
     navigator.mozSetMessageHandler('connection', this.onConnection.bind(this));
