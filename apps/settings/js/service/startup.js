@@ -1,9 +1,11 @@
 'use strict';
+/* global AirplaneModeHelper */
 
 (function (exports) {
   function SettingService() {
     navigator.mozSetMessageHandler('connection', this.onConnection.bind(this));
     this.mozSettings = window.navigator.mozSettings;
+    this.handleAirplaneModeChange = this.onAirplaneModeChange.bind(this);
   }
 
   SettingService.prototype = {
@@ -82,6 +84,23 @@
           result: false
         });
       }.bind(this);
+    },
+
+    observeAirplaneMode: function ss_observeAirplaneMode(data) {
+      AirplaneModeHelper.ready(function() {
+        this.onAirplaneModeChange(AirplaneModeHelper.getStatus());
+        AirplaneModeHelper.addEventListener('statechange',
+          this.handleAirplaneModeChange);
+        console.info(AirplaneModeHelper._callbacks.length);
+      }.bind(this));
+    },
+
+    onAirplaneModeChange: function ss_onAirplaneModeChange(status) {
+      console.info(status);
+      this.respondRequest({
+        type: 'observeAirplaneMode',
+        value: status === 'enabled'
+      });
     },
 
     respondRequest: function ss_respondRequest(response) {

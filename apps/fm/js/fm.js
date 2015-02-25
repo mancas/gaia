@@ -835,11 +835,6 @@ function init() {
 
   // Disable the power button and the fav list when the airplane mode is on.
   updateAirplaneModeUI();
-//TODOOO
-  AirplaneModeHelper.addEventListener('statechange', function(status) {
-    airplaneModeEnabled = status === 'enabled';
-    updateAirplaneModeUI();
-  });
 
   // Load the fav list and enable the FM radio if an antenna is available.
   historyList.init(function hl_ready() {
@@ -967,6 +962,9 @@ console.info(evt.data.type);
       case 'observer':
         handleObserveSetting(evt.data);
         break;
+      case 'observeAirplaneMode':
+        handleAirplanModeStateChange(evt.data);
+        break;
     }
   }
 
@@ -995,6 +993,14 @@ console.info(evt.data.type);
     }
   }
 
+  function handleAirplanModeStateChange(data) {
+    if (typeof(airplaneModeEnabled) === 'undefined')
+      init();
+    console.info(data.value);
+    airplaneModeEnabled = data.value;
+    updateAirplaneModeUI();
+  }
+
   navigator.mozApps.getSelf().onsuccess = function(evt) {
     var app = evt.target.result;
     app.connect('appsettingrequired').then(function onConnAccepted(ports) {
@@ -1002,7 +1008,7 @@ console.info(evt.data.type);
       ports.forEach(function(port) {
         console.info('AppSettingRequired IAC: ' + port);
         port.postMessage({
-          type: 'get',
+          type: 'observeAirplaneMode',
           settingKey: 'airplaneMode.status'
         });
       });
