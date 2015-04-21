@@ -810,7 +810,7 @@ function onAirplaneModeChange(settingValue) {
 }
 
 window.addEventListener('load', function(e) {
-  window.SettingsClient.observe('airplaneMode.enabled',
+  SettingsClient.observe('airplaneMode.enabled',
     false, onAirplaneModeChange);
   init();
 }, false);
