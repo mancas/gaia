@@ -1,16 +1,35 @@
 'use strict';
 
 (function (exports) {
-  function SettingService() {
+  var URL_CONNECT = 'http://telefonicaid.github.io/settings-sw';
+  var debug = function(msg) {
+    console.log('MANU -> ' + msg);
+  };
+
+  function SettingsClient() {
     // Listen to IAC observe messages
-    window.addEventListener('iac-appsettingrequired',
+    window.addEventListener('navigator-response',
       this.handlerObserveResponse.bind(this));
+
+    var self = this;
+    debug('CLIENT connect');
+    navigator.connect(URL_CONNECT).then(
+      function(port) {
+        self.port = port;
+
+        port.onmessage = function(evt) {
+          // Handle reply from the service.
+          debug('msg received --> ' + JSON.stringify(evt.data));
+          var customEvt = new CustomEvent('navigator-response', evt.data);
+          window.dispatchEvent(customEvt);
+        };
+    });
   }
 
-  SettingService.prototype = {
+  SettingsClient.prototype = {
     _observers: [],
 
-    handlerObserveResponse: function ss_handleResponse(evt) {
+    handlerObserveResponse: function ss_handlerObserveResponse(evt) {
       var message = evt.detail;
       if (!evt || message.type !== 'observe') {
         return;
@@ -31,7 +50,7 @@
       }
 
       return new Promise(function(resolve, reject) {
-        window.addEventListener('iac-appsettingrequired',
+        window.addEventListener('navigator-response',
           function getSettingListener(evt) {
             var message = evt.detail;
 
@@ -41,7 +60,7 @@
             }
 
             resolve(message.value);
-            window.removeEventListener('iac-appsettingrequired',
+            window.removeEventListener('navigator-response',
               getSettingListener);
         });
 
@@ -59,7 +78,7 @@
       }
 
       return new Promise(function(resolve, reject) {
-        window.addEventListener('iac-appsettingrequired',
+        window.addEventListener('navigator-response',
           function getSettingListener(evt) {
             var message = evt.detail;
 
@@ -69,7 +88,7 @@
             }
 
             resolve(message.value);
-            window.removeEventListener('iac-appsettingrequired',
+            window.removeEventListener('navigator-response',
               getSettingListener);
         });
 
@@ -113,20 +132,8 @@
       });
     },
 
-    sendRequest: function ss_sendRequest(message) {
-      navigator.mozApps.getSelf().onsuccess = function(evt) {
-        var app = evt.target.result;
-        app.connect('appsettingrequired').then(function onConnAccepted(ports) {
-          console.info('AppSettingRequired IAC: ' + ports);
-          ports.forEach(function(port) {
-            console.info('AppSettingRequired IAC: ' + port);
-            port.postMessage(message);
-          });
-        }, function onConnRejected(reason) {
-          console.info('AppSettingRequired IAC is rejected');
-          console.info(reason);
-        });
-      };
+    sendRequest: function ss_sendRequest(msg) {
+      this.port.postMessage(msg);
     },
 
     _removeObserver: function ss_removeObserve(settingKey, callback) {
@@ -138,5 +145,5 @@
     }
   };
 
-  exports.SettingService = new SettingService();
+  exports.SettingsClient = new SettingsClient();
 }(window));
