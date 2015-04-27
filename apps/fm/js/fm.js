@@ -259,8 +259,9 @@ var frequencyDialer = {
 
   _initUI: function() {
     $('frequency-dialer').innerHTML = '';
-    Promise.all(FMClient.getFrequencyLowerBound,
-      FMClient.getFrequencyUpperBound).then(function(values) {
+    Promise.all([FMClient.getFrequencyLowerBound(),
+      FMClient.getFrequencyUpperBound()]).then(function(values) {
+        console.info('MANU - Promises resolved!');
         var lower = this._bandLowerBound = values[0];
         var upper = this._bandUpperBound = values[1];
 

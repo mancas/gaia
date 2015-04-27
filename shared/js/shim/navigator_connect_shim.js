@@ -8,7 +8,6 @@
 
   //Client side
   function Port(iacPort) {
-    debug('SHIM CLIENT Creando recubrimiento de puertos');
     this.iacPort = iacPort;
     this.iacPort.onmessage = e => {
       debug('SHIM CLIENT : received IAC msg:' + JSON.stringify(e.data));
@@ -41,16 +40,18 @@
         }
         app.connect(where).then(
           ports => {
-            debug('SHIM CLIENT Establecida comunicacion IAC');
+            debug('SHIM CLIENT IAC connection established');
             if (ports && ports.length > 0) {
               var shimPort = new Port(ports[0]);
-              // At this point we have transport. Since IAC doesn't tell the receiver
-              // the URL of the page that's connecting (which is strange, TO-DO check that)
-              // We have to pass that data. This is unsecure as hell...
+              // At this point we have transport. Since IAC doesn't tell the
+              // receiver the URL of the page that's connecting (which is
+              // strange, TO-DO check that) We have to pass that data. This
+              // is unsecure as hell...
               shimPort.postMessage({originURL: document.location.href});
 
               shimPort.onmessage = function(evt) {
-                debug("SHIM ClIENT - Got the accept response: evt.data: " + JSON.stringify(evt.data));
+                debug("SHIM ClIENT - Got the accept response: evt.data: " +
+                      JSON.stringify(evt.data));
                 shimPort.onmessage = null;
                 evt.data.accepted && resolve(shimPort) || reject();
               };
@@ -62,14 +63,15 @@
         );
       };
 
-      request.onerror = domReq => {
-        debug('SHIM CLIENT error retrieved self' + JSON.stringify(domReq.error));
-        reject(domReq.error);
+      request.onerror = dReq => {
+        debug('SHIM CLIENT error retrieved self' + JSON.stringify(dReq.error));
+        reject(dReq.error);
       };
     });
   };
 
   debug('SHIM CLIENT  navigatorConnect se ejecuta!!!');
-  exports.navigator.connect = !exports.navigator.connect && connectShim || undefined;
+  exports.navigator.connect = !exports.navigator.connect && connectShim ||
+                              undefined;
 
 })(window);

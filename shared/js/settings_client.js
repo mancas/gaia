@@ -14,12 +14,12 @@
     var self = this;
     debug('CLIENT connect');
     navigator.connect(URL_CONNECT).then(
-      function(port) {
+      port => {
         self.port = port;
 
         port.onmessage = function(evt) {
           // Handle reply from the service.
-          debug('msg received --> ' + JSON.stringify(evt.data));
+          debug('PORTMANU msg received --> ' + JSON.stringify(evt.data));
           var customEvt = new CustomEvent('navigator-response', evt.data);
           window.dispatchEvent(customEvt);
         };
@@ -110,7 +110,7 @@
         name: settingKey,
         callback: callback
       });
-
+debug(this._observers.length);
       this.sendRequest({
         type: 'observe',
         name: settingKey,
@@ -133,7 +133,8 @@
     },
 
     sendRequest: function ss_sendRequest(msg) {
-      this.port.postMessage(msg);
+debug(JSON.stringify(msg));
+      //this.port.postMessage(msg);
     },
 
     _removeObserver: function ss_removeObserve(settingKey, callback) {

@@ -14,12 +14,14 @@
     var self = this;
     debug('CLIENT connect');
     navigator.connect(URL_CONNECT).then(
-      function(port) {
+      port => {
         self.port = port;
+        debug('CLIENT connected: esta conectado =)');
+        self.sendPendingMessages();
 
         port.onmessage = function(evt) {
           // Handle reply from the service.
-          debug('msg received --> ' + JSON.stringify(evt.data));
+          debug('PORTMANU msg received --> ' + JSON.stringify(evt.data));
           var customEvt = new CustomEvent('ncsresponse', evt.data);
           window.dispatchEvent(customEvt);
         };
@@ -40,9 +42,10 @@
                 'onenabled',
                 'ondisabled',
                 'onantennaavailablechange'],
+    _queue: [],
 
     handleListenerResponse: function fmc_handleListenerResponse(evt) {
-      var message = evt.detail;
+      var message = evt.data;
       if (!evt || message.type !== 'listener') {
         return;
       }
@@ -75,7 +78,7 @@
         var self = this;
         window.addEventListener('ncsresponse',
           function enableListener(evt) {
-            var message = evt.detail;
+            var message = evt.data;
 
             if (!evt || message.type !== 'disable') {
                 return;
@@ -98,7 +101,7 @@
         var self = this;
         window.addEventListener('ncsresponse',
           function enableListener(evt) {
-            var message = evt.detail;
+            var message = evt.data;
 
             if (!evt || message.type !== 'enable') {
                 return;
@@ -120,6 +123,7 @@
     getFrequency: function fmc_getFrequency() {
       return new Promise(function(resolve, reject) {
         if (this.frequency) {
+          debug('freq exits!!!');
           resolve(frequency);
           return;
         }
@@ -127,7 +131,7 @@
         var self = this;
         window.addEventListener('ncsresponse',
           function getFrequencyListener(evt) {
-            var message = evt.detail;
+            var message = evt.data;
 
             if (!evt || message.type !== 'get' ||
               message.name != 'frequency') {
@@ -152,7 +156,7 @@
         var self = this;
         window.addEventListener('ncsresponse',
           function setFrequencyListener(evt) {
-            var message = evt.detail;
+            var message = evt.data;
 
             if (!evt || message.type !== 'set' ||
               message.name != 'frequency') {
@@ -184,7 +188,7 @@
         var self = this;
         window.addEventListener('ncsresponse',
           function getEnabledListener(evt) {
-            var message = evt.detail;
+            var message = evt.data;
 
             if (!evt || message.type !== 'get' ||
               message.name != 'enabled') {
@@ -214,7 +218,7 @@
         var self = this;
         window.addEventListener('ncsresponse',
           function getEnabledListener(evt) {
-            var message = evt.detail;
+            var message = evt.data;
 
             if (!evt || message.type !== 'get' ||
               message.name != 'antennaAvailable') {
@@ -238,7 +242,7 @@
       return new Promise(function(resolve, reject) {
         window.addEventListener('ncsresponse',
           function seekUpListener(evt) {
-            var message = evt.detail;
+            var message = evt.data;
 
             if (!evt || message.type !== 'seekUp') {
                 return;
@@ -256,10 +260,10 @@
     },
 
     seekDown: function fmc_seekDown() {
-      eturn new Promise(function(resolve, reject) {
+      return new Promise(function(resolve, reject) {
         window.addEventListener('ncsresponse',
           function seekDownListener(evt) {
-            var message = evt.detail;
+            var message = evt.data;
 
             if (!evt || message.type !== 'seekDown') {
                 return;
@@ -280,7 +284,7 @@
       return new Promise(function(resolve, reject) {
         window.addEventListener('ncsresponse',
           function cancelSeekListener(evt) {
-            var message = evt.detail;
+            var message = evt.data;
 
             if (!evt || message.type !== 'cancelSeek') {
                 return;
@@ -297,7 +301,7 @@
       });
     },
 
-    getFrequencyLowerBound: frequency fmc_frequencyLowerBound() {
+    getFrequencyLowerBound: function fmc_frequencyLowerBound() {
       return new Promise(function(resolve, reject) {
         if (this.frequencyLowerBound) {
           resolve(this.frequencyLowerBound);
@@ -306,7 +310,7 @@
 
         window.addEventListener('ncsresponse',
           function getFrequencyLowerBoundListener(evt) {
-            var message = evt.detail;
+            var message = evt.data;
 
             if (!evt || message.type !== 'get' ||
               message.name !== 'frequencyLowerBound') {
@@ -318,7 +322,7 @@
             window.removeEventListener('ncsresponse',
               getFrequencyLowerBoundListener);
         });
-
+console.info('MANU - getFrequencyLowerBound');
         this.sendRequest({
           type: 'get',
           name: 'frequencyLowerBound'
@@ -326,7 +330,7 @@
       }.bind(this));
     },
 
-    getFrequencyUpperBound: frequency fmc_frequencyUpperBound() {
+    getFrequencyUpperBound: function fmc_frequencyUpperBound() {
       return new Promise(function(resolve, reject) {
         if (this.frequencyUpperBound) {
           resolve(this.frequencyUpperBound);
@@ -335,7 +339,7 @@
 
         window.addEventListener('ncsresponse',
           function getFrequencyUpperBoundListener(evt) {
-            var message = evt.detail;
+            var message = evt.data;
 
             if (!evt || message.type !== 'get' ||
               message.name !== 'frequencyUpperBound') {
@@ -347,7 +351,7 @@
             window.removeEventListener('ncsresponse',
               getFrequencyUpperBoundListener);
         });
-
+console.info('MANU - getFrequencyLowerBound');
         this.sendRequest({
           type: 'get',
           name: 'frequencyUpperBound'
@@ -356,16 +360,17 @@
     },
 
     addListeners: function fmc_addListeners() {
+      var self = this;
       this._listeners.forEach(function(listener) {
-        this.sendRequest({
+        self.sendRequest({
           type: 'listener',
-          name: name
+          name: listener
         });
       });
 
       window.addEventListener('ncsresponse', function(evt) {
-        var message = evt.detail;
-
+        var message = evt.data;
+debug(JSON.stringify(evt));
         if (!evt || message.type !== 'listener' ||
           this._listeners.indexOf(message.name) === -1) {
             return;
@@ -378,7 +383,19 @@
     },
 
     sendRequest: function fmc_sendRequest(msg) {
+      debug(JSON.stringify(msg));
+      if (!this.port) {
+        this._queue.push(msg);
+        return;
+      }
       this.port.postMessage(msg);
+    },
+
+    sendPendingMessages: function fmc_sendPengindMessages() {
+      debug('Reenviando mensajes');
+      this._queue.forEach(function (msg) {
+        this.sendRequest(msg);
+      }.bind(this));
     }
   };
 
