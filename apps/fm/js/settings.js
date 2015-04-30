@@ -78,6 +78,7 @@
       // When this is executed the promise should have resolved and thus we
       // should have this
       data.lockId = _lockId;
+      debug('EOOOOOOOO  ' + _lockId);
       return {
         id: ++_currentRequestId,
         data: data,
@@ -94,6 +95,8 @@
     function _createAndQueueRequest(data) {
       var request = new FakeDOMRequest();
       request.serialize = _serializeRequest.bind(request, data);
+      debug(JSON.stringify(request.serialize));
+      debug(JSON.stringify(data));
       Promise.all([navConnPromise, _lock]).then(values => values[0].sendObject(request));
       return request;
     }
@@ -106,6 +109,7 @@
     };
 
     this.get = function(settings) {
+      debug('GET!!!');
       return _createAndQueueRequest({
         operation: 'get',
         settings: settings
@@ -120,7 +124,7 @@
         },
         processAnswer: function(answer) {
           if (!answer.error) {
-            _resolve(answer._id);
+            _resolve(answer.id);
           } else {
             _permaFail = 'Error creating lock: ' + answer.error;
             _reject(_permaFail);
