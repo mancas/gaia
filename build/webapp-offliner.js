@@ -46,7 +46,9 @@ WebappOffliner.prototype.createResourcesFile = function() {
   this.visitResources(utils.getFile(this.webapp.appDirPath, 'locales'),
                       this.webapp.appDirPath);
   this.visitResources(this.buildDir, this.buildDirPath);
-  this.resources.push(this.url + '/app.html');
+  ['offliner-init.js', 'offliner-client.js', 'app.html'].forEach(resource => {
+    this.resources.push(this.url + '/' + resource);
+  });
   var file = this.buildDir.clone();
   file.append('offliner-resources.js');
   utils.writeContent(file, 'var resources = ' +
@@ -62,7 +64,7 @@ WebappOffliner.prototype.addDateToWorker = function() {
   }
 
   var content = utils.getFileContent(file);
-  utils.writeContent(file, '// ' + Date.now() + content);
+  utils.writeContent(file, '// ' + Date.now() + '\n' + content);
 };
 
 WebappOffliner.prototype.addSWRegisterToManifest = function() {
@@ -76,7 +78,7 @@ WebappOffliner.prototype.addSWRegisterToManifest = function() {
   manifest.connections = manifest.connections || {};
   manifest.connections.setup = {
     rules: {},
-    handler_path: '/offliner-register.html'
+    handler_path: '/app.html'
   };
   utils.writeContent(file, JSON.stringify(manifest));
 };
@@ -140,8 +142,7 @@ WebappOffliner.prototype.execute = function() {
 };
 
 function execute(options) {
-  var webapp = options.webapp;
-  webapp.manifest.type === 'trusted' && (new WebappOffliner(options)).execute();
+  (new WebappOffliner(options)).execute();
 }
 
 exports.execute = execute;
