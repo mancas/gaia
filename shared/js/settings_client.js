@@ -3,45 +3,55 @@
 (function (exports) {
   var URL_CONNECT = 'http://telefonicaid.github.io/settings-sw';
   var debug = function(msg) {
-    console.log('MANU -> ' + msg);
+    console.log('MANU SETTINGS CLIENT -> ' + msg);
   };
 
   function SettingsClient() {
-    // Listen to IAC observe messages
-    window.addEventListener('navigator-response',
-      this.handlerObserveResponse.bind(this));
-
     var self = this;
     debug('CLIENT connect');
     navigator.connect(URL_CONNECT).then(
       port => {
         self.port = port;
+        debug('CLIENT connected');
+        self.sendPendingMessages();
 
         port.onmessage = function(evt) {
           // Handle reply from the service.
-          debug('PORTMANU msg received --> ' + JSON.stringify(evt.data));
-          var customEvt = new CustomEvent('navigator-response', evt.data);
-          window.dispatchEvent(customEvt);
+          debug('Message received --> ' + JSON.stringify(evt.data));
+
+          switch (evt.data.type) {
+            case 'get':
+              self._getResolvers[evt.data.name].forEach(
+                function(resolve, index) {
+                  resolve(evt.data.value);
+                  self._getResolvers[evt.data.name].splice(index, 1);
+              });
+              break;
+            case 'set':
+              self._setResolvers[evt.data.name].forEach(
+                function(resolve, index) {
+                  resolve(evt.data.value);
+                  self._setResolvers[evt.data.name].splice(index, 1);
+              });
+              break;
+            case 'observe':
+              // Trigger callbacks
+              this._observers.forEach(function(entry) {
+                if (entry.name === evt.data.name) {
+                  entry.callback(evt.data.value);
+                }
+              });
+              break;
+          }
         };
     });
   }
 
   SettingsClient.prototype = {
     _observers: [],
-
-    handlerObserveResponse: function ss_handlerObserveResponse(evt) {
-      var message = evt.detail;
-      if (!evt || message.type !== 'observe') {
-        return;
-      }
-
-      // Trigger callbacks
-      this._observers.forEach(function(entry) {
-        if (entry.name === message.name) {
-          entry.callback(message.value);
-        }
-      });
-    },
+    _queue: [],
+    _getResolvers: [],
+    _setResolvers: [],
 
     get: function ss_get(settingKey) {
       if (!settingKey) {
@@ -50,19 +60,7 @@
       }
 
       return new Promise(function(resolve, reject) {
-        window.addEventListener('navigator-response',
-          function getSettingListener(evt) {
-            var message = evt.detail;
-
-            if (!evt || message.type !== 'get' ||
-              message.name != settingKey) {
-                return;
-            }
-
-            resolve(message.value);
-            window.removeEventListener('navigator-response',
-              getSettingListener);
-        });
+        this._addToResolvers('get', settingKey, resolve);
 
         this.sendRequest({
           type: 'get',
@@ -78,19 +76,7 @@
       }
 
       return new Promise(function(resolve, reject) {
-        window.addEventListener('navigator-response',
-          function getSettingListener(evt) {
-            var message = evt.detail;
-
-            if (!evt || message.type !== 'set' ||
-              message.name != settingKey) {
-                return;
-            }
-
-            resolve(message.value);
-            window.removeEventListener('navigator-response',
-              getSettingListener);
-        });
+        this._addToResolvers('set', settingKey, resolve);
 
         this.sendRequest({
           type: 'set',
@@ -110,7 +96,7 @@
         name: settingKey,
         callback: callback
       });
-debug(this._observers.length);
+
       this.sendRequest({
         type: 'observe',
         name: settingKey,
@@ -133,8 +119,36 @@ debug(this._observers.length);
     },
 
     sendRequest: function ss_sendRequest(msg) {
-debug(JSON.stringify(msg));
-      //this.port.postMessage(msg);
+      if (!this.port) {
+        this._queue.push(msg);
+        return;
+      }
+      this.port.postMessage(msg);
+    },
+
+    sendPendingMessages: function ss_sendPengindMessages() {
+      while (this._queue.length > 0) {
+        this.sendRequest(this._queue.pop());
+      }
+    },
+
+    _addToResolvers: function fmc_addToResolvers(type, setting, resolve) {
+      switch (type) {
+        case 'get':
+          if (this._getResolvers[setting]) {
+            this._getResolvers[setting].push(resolve);
+          } else {
+            this._getResolvers[setting] = [resolve];
+          }
+          break;
+        case 'set':
+          if (this._setResolvers[setting]) {
+            this._setResolvers[setting].push(resolve);
+          } else {
+            this._setResolvers[setting] = [resolve];
+          }
+          break;
+      }
     },
 
     _removeObserver: function ss_removeObserve(settingKey, callback) {

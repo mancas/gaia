@@ -135,7 +135,7 @@ var frequencyDialer = {
     this._initUI();
     FMClient.getFrequency().then(function(frequency) {
       this.setFrequency(frequency);
-    });
+    }.bind(this));
     this._addEventListeners();
   },
 
@@ -261,7 +261,6 @@ var frequencyDialer = {
     $('frequency-dialer').innerHTML = '';
     Promise.all([FMClient.getFrequencyLowerBound(),
       FMClient.getFrequencyUpperBound()]).then(function(values) {
-        console.info('MANU - Promises resolved!');
         var lower = this._bandLowerBound = values[0];
         var upper = this._bandUpperBound = values[1];
 
@@ -288,7 +287,7 @@ var frequencyDialer = {
         for (var i = 0; i < _dialerUnits.length; i++) {
           _dialerUnits[i].style.left = i * _dialerUnitWidth + 'px';
         }
-    });
+    }.bind(this));
   },
 
   _addDialerUnit: function(start, end) {
@@ -355,6 +354,8 @@ var frequencyDialer = {
   },
 
   _updateUI: function(frequency, ignoreDialer) {
+    if (!frequency)
+      return;
     $('frequency').textContent = frequency.toFixed(1);
     if (true !== ignoreDialer) {
       this._translateX = (this._minFrequency - frequency) * this._space;
@@ -642,13 +643,9 @@ function init() {
 
       var request = up ? FMClient.seekUp() : FMClient.seekDown();
 
-      request.onsuccess = function seek_onsuccess() {
+      request.then(function() {
         powerSwitch.removeAttribute('data-seeking');
-      };
-
-      request.onerror = function seek_onerror() {
-        powerSwitch.removeAttribute('data-seeking');
-      };
+      });
     }
 
     // If the FM radio is seeking channel currently, cancel it and seek again.
@@ -697,7 +694,9 @@ function init() {
     speakerSwitch.setAttribute('aria-pressed', speakerManager.speakerforced);
   };
 
-  FMClient.onfrequencychange = updateFreqUI;
+  FMClient.onfrequencychange = function() {
+    updateFreqUI();
+  };
   FMClient.onenabled = function() {
     updateEnablingState(false);
   };
@@ -811,9 +810,12 @@ function onAirplaneModeChange(settingValue) {
 }
 
 window.addEventListener('load', function(e) {
-  SettingsClient.observe('airplaneMode.enabled',
-    false, onAirplaneModeChange);
-  init();
+  /*SettingsClient.get('airplaneMode.enabled').then(function(value) {
+    console.info('AIRPLANEMODE  -  ' + value);
+  });*/
+  FMClient.addListeners().then(function() {
+    init();
+  });
 }, false);
 
 // Turn off radio immediately when window is unloaded.

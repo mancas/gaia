@@ -3,38 +3,46 @@
 (function (exports) {
   var URL_CONNECT = 'http://telefonicaid.github.io/fm-sw';
   var debug = function(msg) {
-    console.log('MANU -> ' + msg);
+    console.log('MANU FM CLIENT -> ' + msg);
   };
 
   function FMClient() {
-    // Listen to IAC observe messages
-    window.addEventListener('ncsresponse',
-      this.handleListenerResponse.bind(this));
-
     var self = this;
     debug('CLIENT connect');
     navigator.connect(URL_CONNECT).then(
       port => {
         self.port = port;
-        debug('CLIENT connected: esta conectado =)');
+        debug('CLIENT connected');
         self.sendPendingMessages();
 
         port.onmessage = function(evt) {
           // Handle reply from the service.
-          debug('PORTMANU msg received --> ' + JSON.stringify(evt.data));
-          var customEvt = new CustomEvent('ncsresponse', evt.data);
-          window.dispatchEvent(customEvt);
-        };
+          debug('Message received --> ' + JSON.stringify(evt.data));
 
-        self.addListeners();
+          // Resolve pending promises
+          if (self._resolvers[evt.data.name]) {
+            self._resolvers[evt.data.name].forEach(function(resolve, index) {
+              resolve(evt.data.value);
+              // Update current state if needed
+              self._updateValueIfNeeded(evt.data.name, evt.data.value);
+
+              self._resolvers[evt.data.name].splice(index, 1);
+            });
+          }
+
+          // Trigger callbacks if needed
+          if (evt.data.type === 'listener' && self[evt.data.name]) {
+            self[evt.data.name]();
+          }
+        };
     });
   }
 
   FMClient.prototype = {
     _observers: [],
-    frequency: null,
+    _resolvers: [],
     enabled: false,
-    antennaAvailable: true,
+    antennaAvailable: null,
     frequencyLowerBound: null,
     frequencyUpperBound: null,
     _listeners: ['onsignalstrengthchange',
@@ -43,20 +51,6 @@
                 'ondisabled',
                 'onantennaavailablechange'],
     _queue: [],
-
-    handleListenerResponse: function fmc_handleListenerResponse(evt) {
-      var message = evt.data;
-      if (!evt || message.type !== 'listener') {
-        return;
-      }
-
-      // Trigger callbacks
-      this._observers.forEach(function(entry) {
-        if (entry.name === message.name) {
-          entry.callback(message.value);
-        }
-      });
-    },
 
     onsignalstrengthchange: function fmc_onsignalstrengthchange() {
     },
@@ -75,20 +69,7 @@
 
     disable: function fmc_disable() {
       return new Promise(function(resolve, reject) {
-        var self = this;
-        window.addEventListener('ncsresponse',
-          function enableListener(evt) {
-            var message = evt.data;
-
-            if (!evt || message.type !== 'disable') {
-                return;
-            }
-
-            resolve(message.value);
-            if (message.value)
-              self.enabled = false;
-            window.removeEventListener('ncsresponse', enableListener);
-        });
+        this._addToResolvers('disable', resolve);
 
         this.sendRequest({
           type: 'disable'
@@ -98,20 +79,7 @@
 
     enable: function fmc_enable(frequency) {
       return new Promise(function(resolve, reject) {
-        var self = this;
-        window.addEventListener('ncsresponse',
-          function enableListener(evt) {
-            var message = evt.data;
-
-            if (!evt || message.type !== 'enable') {
-                return;
-            }
-
-            resolve(message.value);
-            if (message.value)
-              self.enabled = false;
-            window.removeEventListener('ncsresponse', enableListener);
-        });
+        this._addToResolvers('enable', resolve);
 
         this.sendRequest({
           type: 'enable',
@@ -122,27 +90,7 @@
 
     getFrequency: function fmc_getFrequency() {
       return new Promise(function(resolve, reject) {
-        if (this.frequency) {
-          debug('freq exits!!!');
-          resolve(frequency);
-          return;
-        }
-
-        var self = this;
-        window.addEventListener('ncsresponse',
-          function getFrequencyListener(evt) {
-            var message = evt.data;
-
-            if (!evt || message.type !== 'get' ||
-              message.name != 'frequency') {
-                return;
-            }
-
-            resolve(message.value);
-            self.frequency = message.value;
-            window.removeEventListener('ncsresponse',
-              getFrequencyListener);
-        });
+        this._addToResolvers('frequency', resolve);
 
         this.sendRequest({
           type: 'get',
@@ -153,22 +101,7 @@
 
     setFrequency: function fmc_setFrequency(freq) {
       return new Promise(function(resolve, reject) {
-        var self = this;
-        window.addEventListener('ncsresponse',
-          function setFrequencyListener(evt) {
-            var message = evt.data;
-
-            if (!evt || message.type !== 'set' ||
-              message.name != 'frequency') {
-                return;
-            }
-
-            resolve(message.value);
-            if (message.value)
-              self.frequency = freq;
-            window.removeEventListener('ncsresponse',
-              setFrequencyListener);
-        });
+        this._addToResolvers('frequency', resolve);
 
         this.sendRequest({
           type: 'set',
@@ -180,26 +113,7 @@
 
     isEnabled: function fmc_isEnabled() {
       return new Promise(function(resolve, reject) {
-        if (this.enabled) {
-          resolve(this.enabled);
-          return;
-        }
-
-        var self = this;
-        window.addEventListener('ncsresponse',
-          function getEnabledListener(evt) {
-            var message = evt.data;
-
-            if (!evt || message.type !== 'get' ||
-              message.name != 'enabled') {
-                return;
-            }
-
-            resolve(message.value);
-            self.enabled = message.value;
-            window.removeEventListener('ncsresponse',
-              getEnabledListener);
-        });
+        this._addToResolvers('enabled', resolve);
 
         this.sendRequest({
           type: 'get',
@@ -215,21 +129,7 @@
           return;
         }
 
-        var self = this;
-        window.addEventListener('ncsresponse',
-          function getEnabledListener(evt) {
-            var message = evt.data;
-
-            if (!evt || message.type !== 'get' ||
-              message.name != 'antennaAvailable') {
-                return;
-            }
-
-            resolve(message.value);
-            self.antennaAvailable = message.value;
-            window.removeEventListener('ncsresponse',
-              getEnabledListener);
-        });
+        this._addToResolvers('antennaAvailable', resolve);
 
         this.sendRequest({
           type: 'get',
@@ -240,65 +140,35 @@
 
     seekUp: function fmc_seekUp() {
       return new Promise(function(resolve, reject) {
-        window.addEventListener('ncsresponse',
-          function seekUpListener(evt) {
-            var message = evt.data;
-
-            if (!evt || message.type !== 'seekUp') {
-                return;
-            }
-
-            resolve(message.value);
-            window.removeEventListener('ncsresponse',
-              seekUpListener);
-        });
+        this._addToResolvers('seekUp', resolve);
 
         this.sendRequest({
-          type: 'seekUp'
+          type: 'execute',
+          name: 'seekUp'
         });
-      });
+      }.bind(this));
     },
 
     seekDown: function fmc_seekDown() {
       return new Promise(function(resolve, reject) {
-        window.addEventListener('ncsresponse',
-          function seekDownListener(evt) {
-            var message = evt.data;
-
-            if (!evt || message.type !== 'seekDown') {
-                return;
-            }
-
-            resolve(message.value);
-            window.removeEventListener('ncsresponse',
-              seekDownListener);
-        });
+        this._addToResolvers('seekDown', resolve);
 
         this.sendRequest({
-          type: 'seekDown'
+          type: 'execute',
+          name: 'seekDown'
         });
-      });
+      }.bind(this));
     },
 
     cancelSeek: function fmc_cancelSeek() {
       return new Promise(function(resolve, reject) {
-        window.addEventListener('ncsresponse',
-          function cancelSeekListener(evt) {
-            var message = evt.data;
-
-            if (!evt || message.type !== 'cancelSeek') {
-                return;
-            }
-
-            resolve(message.value);
-            window.removeEventListener('ncsresponse',
-              cancelSeekListener);
-        });
+        this._addToResolvers('cancelSeek', resolve);
 
         this.sendRequest({
-          type: 'cancelSeek'
+          type: 'execute',
+          name: 'cancelSeek'
         });
-      });
+      }.bind(this));
     },
 
     getFrequencyLowerBound: function fmc_frequencyLowerBound() {
@@ -308,21 +178,8 @@
           return;
         }
 
-        window.addEventListener('ncsresponse',
-          function getFrequencyLowerBoundListener(evt) {
-            var message = evt.data;
+        this._addToResolvers('frequencyLowerBound', resolve);
 
-            if (!evt || message.type !== 'get' ||
-              message.name !== 'frequencyLowerBound') {
-                return;
-            }
-
-            resolve(message.value);
-            self.frequencyLowerBound = message.value;
-            window.removeEventListener('ncsresponse',
-              getFrequencyLowerBoundListener);
-        });
-console.info('MANU - getFrequencyLowerBound');
         this.sendRequest({
           type: 'get',
           name: 'frequencyLowerBound'
@@ -337,21 +194,8 @@ console.info('MANU - getFrequencyLowerBound');
           return;
         }
 
-        window.addEventListener('ncsresponse',
-          function getFrequencyUpperBoundListener(evt) {
-            var message = evt.data;
+        this._addToResolvers('frequencyUpperBound', resolve);
 
-            if (!evt || message.type !== 'get' ||
-              message.name !== 'frequencyUpperBound') {
-                return;
-            }
-
-            resolve(message.value);
-            self.frequencyUpperBound = message.value;
-            window.removeEventListener('ncsresponse',
-              getFrequencyUpperBoundListener);
-        });
-console.info('MANU - getFrequencyLowerBound');
         this.sendRequest({
           type: 'get',
           name: 'frequencyUpperBound'
@@ -361,24 +205,15 @@ console.info('MANU - getFrequencyLowerBound');
 
     addListeners: function fmc_addListeners() {
       var self = this;
-      this._listeners.forEach(function(listener) {
-        self.sendRequest({
-          type: 'listener',
-          name: listener
+      return new Promise(function(resolve, reject) {
+        self._listeners.forEach(function(listener) {
+          self.sendRequest({
+            type: 'listener',
+            name: listener
+          });
         });
-      });
 
-      window.addEventListener('ncsresponse', function(evt) {
-        var message = evt.data;
-debug(JSON.stringify(evt));
-        if (!evt || message.type !== 'listener' ||
-          this._listeners.indexOf(message.name) === -1) {
-            return;
-        }
-
-        if (this[message.type]) {
-          this[message.type]();
-        }
+        resolve();
       });
     },
 
@@ -393,9 +228,23 @@ debug(JSON.stringify(evt));
 
     sendPendingMessages: function fmc_sendPengindMessages() {
       debug('Reenviando mensajes');
-      this._queue.forEach(function (msg) {
-        this.sendRequest(msg);
-      }.bind(this));
+      while (this._queue.length > 0) {
+        this.sendRequest(this._queue.pop());
+      }
+    },
+
+    _addToResolvers: function fmc_addToResolvers(type, resolve) {
+      if (this._resolvers[type]) {
+        this._resolvers[type].push(resolve);
+      } else {
+        this._resolvers[type] = [resolve];
+      }
+    },
+
+    _updateValueIfNeeded: function fmc_updateValueIfNeeded(type, value) {
+      if (typeof this[type] !== 'function') {
+        this[type] = value;
+      }
     }
   };
 
