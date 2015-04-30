@@ -810,9 +810,9 @@ function onAirplaneModeChange(settingValue) {
 }
 
 window.addEventListener('load', function(e) {
-  /*SettingsClient.get('airplaneMode.enabled').then(function(value) {
+  SettingsClient.get('airplaneMode.enabled').then(function(value) {
     console.info('AIRPLANEMODE  -  ' + value);
-  });*/
+  });
   FMClient.addListeners().then(function() {
     init();
   });
