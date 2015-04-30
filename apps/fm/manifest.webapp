@@ -1,7 +1,7 @@
 {
   "name": "FM Radio",
   "description": "Gaia FM Radio",
-  "type": "trusted",
+  "type": "certified",
   "url": "https://fm.hostedweb.tid.es",
   "appcache_path": "./manifest.appcache",
   "launch_path": "/index.html",
@@ -12,8 +12,7 @@
   "permissions": {
     "fmradio":{},
     "speaker-control":{},
-    "audio-channel-content":{},
-    "settings:airplaneMode.enabled": { "access": "readonly" }
+    "audio-channel-content":{}
   },
   "connections": {
     "appsettingrequired": {

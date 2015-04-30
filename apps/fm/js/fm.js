@@ -908,14 +908,22 @@ function init() {
   );*/
 }
 
-function onAirplaneModeChange(settingValue) {
-  airplaneModeEnabled = settingValue;
+function onAirplaneModeChange(event) {
+  airplaneModeEnabled = event.settingValue;
   updateWarningModeUI();
 }
 
 window.addEventListener('load', function(e) {
-  window.SettingService.observe('airplaneMode.enabled',
-    false, onAirplaneModeChange);
+  window.navigator.mozSettings.addObserver('airplaneMode.enabled',
+    onAirplaneModeChange);
+
+  var lock = window.navigator.mozSettings.createLock();
+  var request = lock.get('airplaneModeEnabled.enabled');
+
+  request.onsuccess = function(evt) {
+    console.info(JSON.stringify(evt));
+  }
+
   init();
 }, false);
 
