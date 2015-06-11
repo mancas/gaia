@@ -63,7 +63,8 @@ function navigationStack(currentView) {
         current: 'move-right-out',
         next: 'move-right-in'
       }
-    }
+    },
+    'circular': {}
   };
 
   var COMMS_APP_ORIGIN = location.origin;
@@ -93,6 +94,13 @@ function navigationStack(currentView) {
       if (callback) {
         callback();
       }
+      return;
+    }
+
+    if(transition === 'circular') {
+      window.AnimationsHelper.animateInFromTarget().then(() => {
+        window.location.href = '/contacts/details.html';
+      });
       return;
     }
 

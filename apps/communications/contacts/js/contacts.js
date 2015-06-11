@@ -360,7 +360,7 @@ var Contacts = (function() {
         if (contacts.Search && contacts.Search.isInSearchMode()) {
           MainNavigation.go('view-contact-details', 'go-deeper-search');
         } else {
-          MainNavigation.go('view-contact-details', 'go-deeper');
+          MainNavigation.go('view-contact-details', 'circular');
         }
       });
     });

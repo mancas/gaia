@@ -1635,6 +1635,7 @@ contacts.List = (function() {
                           (target.parentNode.dataset || {}) : {};
     var uuid = dataset.uuid || parentDataset.uuid;
     if (uuid) {
+      window.AnimationsHelper.saveTarget(evt);
       callbacks.forEach(function(callback) {
         callback(uuid);
       });
