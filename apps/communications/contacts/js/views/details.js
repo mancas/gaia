@@ -6,6 +6,7 @@
 
   var DetailsBasic = function DetailsBasic() {
     this.isAFavoriteChange = false;
+
     utils.listeners.add({
       '#toggle-favorite': this.toggleFavorite.bind(this)
     });
@@ -84,7 +85,7 @@
       //renderDuplicate(contact);
     }
 
-    //renderPhoto(contact);
+    this.renderPhoto(contact);
   };
 
   DetailsBasic.prototype.renderFavorite = function(contact) {
@@ -160,6 +161,58 @@
     }).then();
 
     return promise;
+  };
+
+  DetailsBasic.prototype.renderPhoto = function(contact) {
+    this.contactDetails.classList.remove('up');
+    if (this.isFbContact) {
+      this.contactDetails.classList.add('fb-contact');
+    }
+
+    var photo = ContactPhotoHelper.getFullResolution(contact);
+    if (photo) {
+      var currentHash = this.cover.dataset.imgHash;
+      if (!currentHash) {
+        utils.dom.updatePhoto(photo, this.cover);
+        this.updateHash(photo, this.cover);
+      }
+      else {
+        // Need to recalculate the hash and see whether the images changed
+        thus.calculateHash(photo, newHash => {
+          if (currentHash !== newHash) {
+            utils.dom.updatePhoto(photo, this.cover);
+            this.cover.dataset.imgHash = newHash;
+          }
+          else {
+            // Only for testing purposes
+            this.cover.dataset.photoReady = 'true';
+          }
+        });
+      }
+
+      this.contactDetails.classList.add('up');
+      this.cover.classList.add('translated');
+      this.contactDetails.classList.add('translated');
+      var clientHeight = this.contactDetails.clientHeight -
+          (this.initMargin * 10 * SCALE_RATIO);
+      if (this.detailsInner.offsetHeight < clientHeight) {
+        this.cover.style.overflow = 'hidden';
+      } else {
+        this.cover.style.overflow = 'auto';
+      }
+    } else {
+      this.resetPhoto();
+    }
+  };
+
+  DetailsBasic.prototype.resetPhoto = function() {
+    this.cover.classList.remove('translated');
+    this.contactDetails.classList.remove('translated');
+    this.cover.style.backgroundImage = '';
+    this.cover.style.overflow = 'auto';
+    this.contactDetails.style.transform = '';
+    this.contactDetails.classList.add('no-photo');
+    this.cover.dataset.imgHash = '';
   };
 
 

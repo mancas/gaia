@@ -25,8 +25,12 @@
     this.contactData = null;
     this._ = navigator.mozL10n.get;
 
+    this.photoPos = 7;
+    this.initMargin = 8;
+
 
     this.initListeners();
+    this.initPullEffect(this.cover);
   };
 
   Details.prototype.initListeners = function() {
@@ -50,6 +54,57 @@
     else {
       buttonElement.setAttribute('disabled', 'disabled');
     }
+  };
+
+  Details.prototype.initPullEffect = function(cover) {
+    var maxPosition = Math.round(150 * SCALE_RATIO);
+    var startPosition = 0;
+    var self = this;
+
+    function onTouchStart(e) {
+      if (self.contactDetails.classList.contains('no-photo')) {
+        return;
+      }
+      e.preventDefault();
+      startPosition = e.changedTouches[0].clientY;
+
+      self.contactDetails.classList.add('up');
+      self.cover.classList.add('up');
+
+      window.addEventListener('touchmove', onTouchMove, true);
+      window.addEventListener('touchend', onTouchEnd, true);
+    }
+
+    function onTouchEnd(e) {
+      e.preventDefault();
+
+      self.contactDetails.style.transform = null;
+      self.contactDetails.classList.add('up');
+
+      self.cover.style.transform = null;
+      self.cover.classList.add('up');
+
+      window.removeEventListener('touchmove', onTouchMove, true);
+      window.removeEventListener('touchend', onTouchEnd, true);
+    }
+
+    function onTouchMove(e) {
+      e.preventDefault();
+
+      var deltaY = e.changedTouches[0].clientY - startPosition;
+      deltaY = Math.min(maxPosition, Math.max(0, deltaY));
+
+      var calc = 'calc(' + self.initMargin + 'rem + ' + deltaY + 'px)';
+      self.contactDetails.style.transform = 'translateY(' + calc + ')';
+      self.contactDetails.classList.remove('up');
+
+      // Divide by 40 (4 times slower and in rems)
+      var coverPosition = (-self.photoPos + (deltaY / 40)) + 'rem';
+      self.cover.style.transform = 'translateY(' + coverPosition + ')';
+      self.cover.classList.remove('up');
+    }
+
+    self.cover.addEventListener('touchstart', onTouchStart, true);
   };
 
   // Fills the contact data to display if no givenName and familyName
@@ -86,6 +141,33 @@
 
   Details.prototype.setContact = function(currentContact) {
     this.contactData = currentContact;
+  };
+
+  Details.prototype.calculateHash = function(photo, cb) {
+    var START_BYTES = 127;
+    var BYTES_HASH = 16;
+
+    var out = [photo.type, photo.size];
+
+    // We skip the first bytes that typically are headers
+    var chunk = photo.slice(START_BYTES, START_BYTES + BYTES_HASH);
+    var reader = new FileReader();
+    reader.onloadend = function() {
+      out.push(reader.result);
+      cb(out.join(''));
+    };
+    reader.onerror = function() {
+      window.console.error('Error while calculating the hash: ',
+                           reader.error.name);
+      cb(out.join(''));
+    };
+    reader.readAsDataURL(chunk);
+  };
+
+  Details.prototype.updateHash = function(photo, cover) {
+    this.calculateHash(photo, hash => {
+      this.cover.dataset.imgHash = hash;
+    });
   };
 
   exports.Details = Details;
