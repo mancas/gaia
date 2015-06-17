@@ -334,7 +334,7 @@ var Contacts = (function() {
   };
 
   var contactListClickHandler = function originalHandler(id) {
-    initDetails(function onDetailsReady() {
+    /*initDetails(function onDetailsReady() {
       ContactsService.get(id, function findCb(contact, fbContact) {
 
         // Enable NFC listening is available
@@ -359,6 +359,9 @@ var Contacts = (function() {
           MainNavigation.go('view-contact-details', 'go-deeper');
         }
       });
+    });*/
+    window.AnimationsHelper.animateInFromTarget().then(() => {
+      window.location.href = '/contacts/details.html#' + id;
     });
   };
 
@@ -914,6 +917,15 @@ var Contacts = (function() {
 
   window.addEventListener('DOMContentLoaded', function onLoad() {
     window.removeEventListener('DOMContentLoaded', onLoad);
+  });
+
+  window.addEventListener('pageshow', function onPageshow() {
+    var pendingOp = sessionStorage.getItem('oncontactchange');
+
+    // Invoke oncontactchange manually
+    if (typeof pendingOp !== 'undefined') {
+      oncontactchange(JSON.parse(pendingOp));
+    }
   });
 
   return {

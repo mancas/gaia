@@ -118,7 +118,7 @@
       request.onsuccess = function findCallback(e) {
         var result = e.target.result[0];
 
-        if (!fb.isFbContact(result)) {
+        if (typeof fb === 'undefined' || !fb.isFbContact(result)) {
           successCb(result);
           return;
         }
@@ -178,6 +178,17 @@
         }
       };
       cursor.onerror = onErrorCB;
+    },
+
+    getCount: function(callback) {
+      var req = navigator.mozContacts.getCount();
+      req.onsuccess = function() {
+        callback(req.result);
+      };
+
+      req.onerror = function() {
+        callback(new Error('Error while retrieving the number of Contacts'));
+      };
     }
   };
 
