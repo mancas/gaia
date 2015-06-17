@@ -117,7 +117,7 @@
                  "text/directory"]
       },
       "disposition": "inline",
-      "href": "/contacts/index.html?open",
+      "href": "/contacts/views/details/details.html",
       "returnValue": true
     },
     "new": {
