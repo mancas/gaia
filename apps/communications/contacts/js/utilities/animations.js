@@ -6,7 +6,7 @@
     return;
   }
   var styles = `
-    .background {
+    .overlay {
       position: absolute;
       top: 0; left: 0;
       width: 100%;
@@ -17,11 +17,16 @@
       z-index: 1;
     }
 
+    .open {
+      opacity: 1;
+      transform: scale(1);
+    }
+
     /**
      * .circular
      */
 
-    .background.circular {
+    .overlay.circular {
       width: 40px;
       height: 40px;
       margin: -20px;
@@ -33,16 +38,26 @@
     }`;
 
   exports.AnimationsHelper = {
-    background: null,
+    overlay: null,
     target: null,
     scheduler: null,
 
-    init: function() {
-        this.background = document.createElement('div');
-        this.background.classList.add('background');
-        document.body.appendChild(this.background);
+    init: function(opened) {
+        this.overlay = document.createElement('div');
+        this.overlay.classList.add('overlay');
+        document.body.appendChild(this.overlay);
+
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta && meta.getAttribute('content')) {
+          this.overlay.style.backgroundColor = meta.getAttribute('content');
+        }
+
+        if (opened) {
+          this.overlay.classList.add('open');
+        }
+
         this.scheduler = new DomScheduler();
-        this.dispatch('backgroundloaded');
+        this.dispatch('overlayloaded');
     },
 
     saveTarget: function(e) {
@@ -63,31 +78,26 @@
         var pos = this.target.touches && this.target.touches[0]
                   || this.target;
         var scale = Math.sqrt(innerWidth * innerHeight) / 10;
-        var background = this.background;
+        var overlay = this.overlay;
         var duration = scale * 7;
         var end = 'transitionend';
         var self = this;
-
-        var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta && meta.getAttribute('content')) {
-          background.style.backgroundColor = meta.getAttribute('content');
-        }
 
         var translate = 'translate(' + pos.clientX + 'px, ' +
           pos.clientY + 'px)';
 
         this.scheduler.transition(() =>  {
-           background.style.transform = 'translate(' + pos.clientX + 'px, ' +
+           overlay.style.transform = 'translate(' + pos.clientX + 'px, ' +
             pos.clientY + 'px)';
-          background.classList.add('circular');
+          overlay.classList.add('circular');
           this.dispatch('animationstart');
 
-          var reflow = background.offsetTop;
+          var reflow = overlay.offsetTop;
 
-          background.style.transitionDuration = duration + 'ms';
-          background.style.transform += ' scale(' + scale + ')';
-          background.classList.add('fade-in');
-        }, background, end).then(() => {
+          overlay.style.transitionDuration = duration + 'ms';
+          overlay.style.transform += ' scale(' + scale + ')';
+          overlay.classList.add('fade-in');
+        }, overlay, end).then(() => {
           this.dispatch('animationend');
           this.setOnPageShowListener(translate);
           resolve();
@@ -96,13 +106,13 @@
     },
 
     dispatch: function(name) {
-        window.dispatchEvent(new CustomEvent(name));
+      window.dispatchEvent(new CustomEvent(name));
     },
 
     clearStyles: function() {
-      this.background.style.transform = '';
-      this.background.style.transitionDuration = '';
-      this.background.classList.remove('fade-in');
+      this.overlay.style.transform = '';
+      this.overlay.style.transitionDuration = '';
+      this.overlay.classList.remove('fade-in');
     },
 
     setOnPageShowListener: function(translate) {
@@ -110,8 +120,8 @@
       window.addEventListener('pageshow', function fn() {
         window.removeEventListener('pageshow', fn);
         self.scheduler.transition(() => {
-          self.background.style.transform = translate + ' scale(0)';
-        }, self.background, 'transitionend').then(() => {
+          self.overlay.style.transform = translate + ' scale(0)';
+        }, self.overlay, 'transitionend').then(() => {
           self.clearStyles();
         });
       });
@@ -125,8 +135,14 @@
     style.innerHTML = styles;
     document.head.appendChild(style);
 
+    var meta = document.querySelector('meta[name="overlay-open"]');
+    var opened = false;
+    if (meta && meta.getAttribute('content')) {
+      opened = meta.getAttribute('content');
+    }
+
     // Initialize animation helper
-    exports.AnimationsHelper.init();
+    exports.AnimationsHelper.init(opened);
   });
 
 })(window);
