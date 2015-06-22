@@ -77,13 +77,29 @@ var ActivityHandler = {
     return this.currentlyHandling && list.indexOf(this.activityName) === -1;
   },
 
+  checkCancelableActivity: function() {
+    if (this.currentlyHandling) {
+      var alternativeTitle = null;
+      var activityName = this.activityName;
+      if (activityName === 'pick' || activityName === 'update') {
+        alternativeTitle = 'selectContact';
+      }
+      var groupsList = document.getElementById('groups-list');
+      HeaderUI.setSelectModeClass(groupsList, activityName,
+                              this.activityDataType);
+      HeaderUI.setupCancelableHeader(alternativeTitle);
+    } else {
+      HeaderUI.setupActionableHeader();
+    }
+  },
+
   launch_activity: function ah_launch(activity, action) {
     if (this._launchedAsInlineActivity) {
       return;
     }
 
     this._currentActivity = activity;
-    Contacts.checkCancelableActivity();
+    this.checkCancelableActivity();
 
     var hash = action;
     var param, params = [];
@@ -123,7 +139,7 @@ var ActivityHandler = {
           return;
         }
         this._currentActivity = activity;
-        Contacts.checkCancelableActivity();
+        this.checkCancelableActivity();
         MainNavigation.home();
         break;
       case 'import':

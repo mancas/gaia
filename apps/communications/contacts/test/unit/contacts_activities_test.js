@@ -86,7 +86,7 @@ suite('Test Activities', function() {
       window.utils.importedID = null;
       document.location.hash = '';
 
-      this.sinon.spy(Contacts, 'checkCancelableActivity');
+      this.sinon.spy(ActivityHandler, 'checkCancelableActivity');
     });
 
     test('New contact', function() {
@@ -154,7 +154,7 @@ suite('Test Activities', function() {
         }
       };
       assertIsOpened(activity, 'add-parameters');
-      assert.isTrue(Contacts.checkCancelableActivity.called,
+      assert.isTrue(ActivityHandler.checkCancelableActivity.called,
                                             'checks for activity UI specifics');
     });
 
@@ -167,7 +167,7 @@ suite('Test Activities', function() {
         }
       };
       ActivityHandler.handle(activity);
-      assert.isTrue(Contacts.checkCancelableActivity.called,
+      assert.isTrue(ActivityHandler.checkCancelableActivity.called,
                                             'checks for activity UI specifics');
       assert.equal(ActivityHandler._currentActivity, activity);
     });
@@ -201,7 +201,7 @@ suite('Test Activities', function() {
       assertIsOpened(activity, 'view-contact-list');
       assert.equal(document.location.hash.indexOf('id'), -1,
         'no contact id as parameter');
-      assert.isTrue(Contacts.checkCancelableActivity.called,
+      assert.isTrue(ActivityHandler.checkCancelableActivity.called,
         'checks for activity UI specifics');
     });
   });

@@ -1195,7 +1195,7 @@ suite('Render contacts list', function() {
       var numFilteredContacts = 3;
 
       subject.selectFromList('', null, function onSelectMode() {
-        var stub = sinon.stub(window.Contacts, 'updateSelectCountTitle',
+        var stub = sinon.stub(window.HeaderUI, 'updateSelectCountTitle',
          function(count) {
             stub.restore();
             subject.exitSelectMode();

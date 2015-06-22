@@ -2175,7 +2175,7 @@ contacts.List = (function() {
     }
   };
   function updateSelectCount(count) {
-    Contacts.updateSelectCountTitle(count);
+    HeaderUI.updateSelectCountTitle(count);
   }
 
   // Given a UUID we will call the callback function

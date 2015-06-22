@@ -320,13 +320,13 @@ suite('Contacts', function() {
         window.ActivityHandler.activityName = activityName;
         window.ActivityHandler.activityDataType = [activityType];
         var classList = document.getElementById('groups-list').classList;
-        Contacts.checkCancelableActivity();
+        ActivityHandler.checkCancelableActivity();
         assert.isTrue(isFiltered === classList.contains('disable-fb-items'));
         classList.remove('disable-fb-items');
       }
 
       test('> handling an activity', function() {
-        Contacts.checkCancelableActivity();
+        ActivityHandler.checkCancelableActivity();
 
         // Settings is hidden
         assert.isTrue(settingsButton.hidden);
