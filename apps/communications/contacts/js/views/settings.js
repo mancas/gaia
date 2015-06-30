@@ -438,7 +438,7 @@ contacts.Settings = (function() {
   }
 
   function resetWait(wakeLock) {
-    Contacts.hideOverlay();
+    utils.overlay.hide();
     if (wakeLock) {
       wakeLock.unlock();
     }
@@ -458,7 +458,7 @@ contacts.Settings = (function() {
     if (icc === null) {
       return;
     }
-    var progress = Contacts.showOverlay('simContacts-reading',
+    var progress = utils.overlay.show('simContacts-reading',
       'activityBar');
 
     var wakeLock = navigator.requestWakeLock('cpu');
@@ -561,12 +561,12 @@ contacts.Settings = (function() {
   var onSdImport = function onSdImport(cb) {
     var cancelled = false;
     var importer = null;
-    var progress = Contacts.showOverlay(
-      'memoryCardContacts-reading', 'activityBar');
+    var progress = utils.overlay.show('memoryCardContacts-reading',
+      'activityBar');
     utils.overlay.showMenu();
     utils.overlay.oncancel = function() {
       cancelled = true;
-      importer ? importer.finish() : Contacts.hideOverlay();
+      importer ? importer.finish() : utils.overlay.hide();
     };
     var wakeLock = navigator.requestWakeLock('cpu');
 

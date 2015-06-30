@@ -66,7 +66,7 @@ contacts.BulkDelete = (function() {
     };
 
     contactsRemoverObj.onError = function onError() {
-      Contacts.hideOverlay();
+      utils.overlay.hide();
       utils.status.show({
         id: 'deleteError-general'
       });
@@ -74,7 +74,7 @@ contacts.BulkDelete = (function() {
     };
 
     contactsRemoverObj.onFinished = function onFinished() {
-      Contacts.hideOverlay();
+      utils.overlay.hide();
       utils.status.show({
         id: 'DeletedTxt',
         args: {n: contactsRemoverObj.getDeletedCount()}
@@ -94,12 +94,12 @@ contacts.BulkDelete = (function() {
     requireOverlay(function onOverlay() {
       utils.overlay.show('preparing-contacts', 'spinner');
       promise.onsuccess = function onSuccess(ids) {
-        Contacts.hideOverlay();
+        utils.overlay.hide();
         showConfirm(ids.length).then(
                           contacts.BulkDelete.doDelete.bind(null, ids, done));
       };
       promise.onerror = function onError() {
-        Contacts.hideOverlay();
+        utils.overlay.hide();
       };
     });
   };

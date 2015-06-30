@@ -86,8 +86,16 @@ suite('Import contacts >', function() {
     realUtils = window.utils;
     window.utils = MockUtils;
     window.utils.overlay = {
-      show: function() {},
-      showMenu: function() {}
+      show: function() {
+        return {
+          'setClass': function(clazz) {},
+          'setHeaderMsg': function(msg) {},
+          'setTotal': function(total) {},
+          'update': function() {}
+        };
+      },
+      showMenu: function() {},
+      hide: function() {}
     };
 
     window.utils.status = {

@@ -129,7 +129,7 @@ window.ContactsExporter = function ContactsExporter(theStrategy) {
         ConfirmDialog.show('exportErrorTitle',
                               errorString + error.reason, cancel, retry);
 
-        Contacts.hideOverlay();
+        utils.overlay.hide();
 
         console.error('An error occurred during the export: ',
                       error.reason.name || error.reason);

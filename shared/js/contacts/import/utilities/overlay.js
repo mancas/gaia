@@ -91,6 +91,7 @@ var utils = window.utils || {};
       overlay.removeEventListener('animationend', ov_onFadeIn);
       overlay.classList.remove('no-opacity');
       utils.overlay.isShown = true;
+      window.dispatchEvent(new CustomEvent('overlayshown'));
     });
   };
 
@@ -177,6 +178,7 @@ var utils = window.utils || {};
       overlay.classList.add('no-opacity');
       overlay.classList.add('hide');
       utils.overlay.isShown = false;
+      window.dispatchEvent(new CustomEvent('overlayhidden'));
     });
   };
   utils.overlay.hide = function ov_hide() {

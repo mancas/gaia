@@ -559,8 +559,7 @@ var Contacts = (function() {
     }
   };
 
-  var showOverlay = function c_showOverlay(messageId, progressClass, textId) {
-    var out = utils.overlay.show(messageId, progressClass, textId);
+  var onOverlayShown = function c_onOverlayShown() {
     // When we are showing the overlay we are often performing other
     // significant work, such as importing.  While performing this work
     // it would be nice to avoid the overhead of any accidental reflows
@@ -569,14 +568,10 @@ var Contacts = (function() {
     // minimize this impact by hiding the list while we are showing the
     // overlay.
     contacts.List.hide();
-    return out;
   };
 
-  var hideOverlay = function c_hideOverlay() {
-    Contacts.utility('Overlay', function _loaded() {
-      contacts.List.show();
-      utils.overlay.hide();
-    }, SHARED_UTILS);
+  var onOverlayHidden = function c_onOverlayHidden() {
+    contacts.List.show();
   };
 
   var showSettings = function showSettings() {
@@ -918,6 +913,9 @@ var Contacts = (function() {
     window.removeEventListener('DOMContentLoaded', onLoad);
   });
 
+  window.addEventListener('overlayshown', onOverlayShown);
+  window.addEventListener('overlayhidden', onOverlayHidden);
+
   return {
     'goBack' : handleBack,
     'cancel': handleCancel,
@@ -928,8 +926,6 @@ var Contacts = (function() {
     'setCurrent': setCurrent,
     'onLocalized': onLocalized,
     'init': init,
-    'showOverlay': showOverlay,
-    'hideOverlay': hideOverlay,
     'showContactDetail': contactListClickHandler,
     'updateContactDetail': updateContactDetail,
     'loadFacebook': loadFacebook,
