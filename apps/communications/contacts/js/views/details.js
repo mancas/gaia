@@ -8,7 +8,6 @@
 /* global ContactsButtons */
 /* global ContactPhotoHelper */
 /* globals ContactToVcardBlob */
-/* global fb */
 /* global ICEData */
 /* global LazyLoader */
 /* global MozActivity */
@@ -17,7 +16,6 @@
 /* global TAG_OPTIONS */
 /* global utils */
 /* global VcardFilename */
-/* global ExtServices */
 /* global MatchService */
 /* global WebrtcClient */
 /* global MainNavigation */
@@ -42,8 +40,6 @@ contacts.Details = (function() {
       socialTemplate,
       duplicateTemplate,
       notesTemplate,
-      isFbContact,
-      isFbLinked,
       editContactButton,
       cover,
       favoriteMessage,
@@ -220,9 +216,6 @@ contacts.Details = (function() {
 
     contactData = currentContact || contactData;
 
-    isFbContact = fb.isFbContact(contactData);
-    isFbLinked = fb.isFbLinked(contactData);
-
     // Initially enabled and only disabled if necessary
     editContactButton.removeAttribute('disabled');
     editContactButton.classList.remove('hide');
@@ -234,22 +227,7 @@ contacts.Details = (function() {
       header.setAttribute('action', 'close');
       socialTemplate.classList.add('hide');
     }
-
-    if (!fbContactData && isFbContact) {
-      var fbContact = new fb.Contact(contactData);
-      var req = fbContact.getData();
-
-      req.onsuccess = function do_reload() {
-        doReloadContactDetails(req.result);
-      };
-
-      req.onerror = function() {
-        window.console.error('FB: Error while loading FB contact data');
-        doReloadContactDetails(contactData);
-      };
-    } else {
-      doReloadContactDetails(fbContactData || contactData);
-    }
+    doReloadContactDetails(contactData);
   };
 
   // Fills the contact data to display if no givenName and familyName
@@ -285,7 +263,6 @@ contacts.Details = (function() {
   var doReloadContactDetails = function doReloadContactDetails(contact) {
     detailsNameText.textContent = getDisplayName(contact);
     contactDetails.classList.remove('no-photo');
-    contactDetails.classList.remove('fb-contact');
     contactDetails.classList.remove('up');
     utils.dom.removeChildNodes(listContainer);
 
@@ -302,13 +279,9 @@ contacts.Details = (function() {
     renderDates(contact);
 
     renderNotes(contact);
-    if (fb.isEnabled) {
-      renderSocial(contact);
-    }
+    renderSocial(contact);
 
-    if (!fb.isFbContact(contact) || fb.isFbLinked(contact)) {
-      renderDuplicate(contact);
-    }
+    renderDuplicate(contact);
 
     renderPhoto(contact);
   };
@@ -359,15 +332,10 @@ contacts.Details = (function() {
           }
 
           isAFavoriteChange = true;
-          /*
-             Two contacts are returned because the enrichedContact is readonly
-             and if the Contact is edited we need to prevent saving
-             FB data on the mozContacts DB.
-          */
 
           ContactsService.get(
             contact.id,
-            function onSuccess(savedContact, enrichedContact) {
+            function onSuccess(savedContact) {
               renderFavorite(savedContact);
               setContact(savedContact);
               favoriteMessage.style.pointerEvents = 'auto';
@@ -435,46 +403,22 @@ contacts.Details = (function() {
   };
 
   var renderSocial = function cd_renderSocial(contact) {
-    var linked = isFbLinked;
-
-    var action = linked ? _('social-unlink') : _('social-link');
-    var slinked = linked ? 'false' : 'true';
-
-    var social = utils.templates.render(socialTemplate, {
-      i: contact.id,
-      action: action,
-      linked: slinked
-    });
+    var social = utils.templates.render(socialTemplate, {});
     currentSocial = social;
     var linkButton = social.querySelector('#link_button');
     var shareButton = social.querySelector('#share_button');
 
     shareButton.addEventListener('click', shareContact);
 
-    if (!isFbContact) {
-      socialButtonIds.forEach(function check(id) {
-        var button = social.querySelector(id);
-        if (button) {
-          button.classList.add('hide');
-        }
-      });
-      // Checking whether link should be enabled or not
-      doDisableButton(linkButton);
-      shareButton.classList.remove('hide');
-    } else {
-        var socialLabel = social.querySelector('#social-label');
-        if (socialLabel) {
-          socialLabel.setAttribute('data-l10n-id', 'facebook');
-        }
-        shareButton.classList.add('hide');
-    }
-
-    // If it is a FB Contact but not linked unlink must be hidden
-    if (isFbContact && !linked) {
-      linkButton.classList.add('hide');
-    }
-
-    ExtServices.initEventHandlers(social, contact, linked);
+    socialButtonIds.forEach(function check(id) {
+      var button = social.querySelector(id);
+      if (button) {
+        button.classList.add('hide');
+      }
+    });
+    // Checking whether link should be enabled or not
+    doDisableButton(linkButton);
+    shareButton.classList.remove('hide');
 
     listContainer.appendChild(social);
   };
@@ -483,9 +427,7 @@ contacts.Details = (function() {
     var socialTemplate = document.querySelector(
                                         ':not([data-template])[data-social]');
 
-    if (socialTemplate && !isFbContact) {
-      doDisableButton(socialTemplate.querySelector('#link_button'));
-    }
+    doDisableButton(socialTemplate.querySelector('#link_button'));
   };
 
   function doDisableButton(buttonElement) {
@@ -609,10 +551,6 @@ contacts.Details = (function() {
 
   var renderPhoto = function cd_renderPhoto(contact) {
     contactDetails.classList.remove('up');
-    if (isFbContact) {
-      contactDetails.classList.add('fb-contact');
-    }
-
     var photo = ContactPhotoHelper.getFullResolution(contact);
     if (photo) {
       var currentHash = cover.dataset.imgHash;
