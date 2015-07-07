@@ -7,11 +7,11 @@
 
   Controller.prototype = {
     get activity() {
-      return _activity;
+      return this._activity;
     },
 
     set activity(value) {
-      _activity = value;
+      this._activity = value;
     }
   };
 

@@ -1,6 +1,5 @@
 'use strict';
 /* global _ */
-/* global Cache */
 /* global ConfirmDialog */
 /* global Contacts */
 /* global ContactsBTExport */
@@ -10,7 +9,6 @@
 /* global fb */
 /* global IccHandler */
 /* global LazyLoader */
-/* global navigationStack */
 /* global Rest */
 /* global SimContactsImporter */
 /* global SimDomGenerator */
@@ -18,37 +16,21 @@
 /* global VCFReader */
 /* global ContactsService */
 /* global ExtServices */
+/* global SettingsUI */
+/* global contacts */
+/* global Controller */
 
 (function(exports) {
-  var importSettingsHeader,
-    orderCheckBox,
-    orderItem,
-    orderByLastName,
-    setICEButton,
-    importSettingsPanel,
-    importSettingsTitle,
-    importContacts,
-    exportContacts,
-    importOptions,
-    exportOptions,
-    importLiveOption,
-    importGmailOption,
-    importSDOption,
-    exportSDOption,
+  var orderByLastName,
     newOrderByLastName = null,
-    PENDING_LOGOUT_KEY = 'pendingLogout',
-    bulkDeleteButton;
+    PENDING_LOGOUT_KEY = 'pendingLogout';
 
     var EXPORT_TRANSITION_LEVEL = 2, DELETE_TRANSITION_LEVEL = 1;
 
   // Initialise the settings screen (components, listeners ...)
   var init = function initialize() {
     // Create the DOM for our SIM cards and listen to any changes
-    IccHandler.init(new SimDomGenerator(), window.contacts.Settings.cardStateChanged);
-  };
-
-  var hideSettings = function hideSettings() {
-    contacts.Settings.close();
+    IccHandler.init(new SimDomGenerator(), SettingsUI.cardStateChanged);
   };
 
   // Get the different values that we will show in the app
@@ -57,7 +39,7 @@
     var order = config ? config.order : false;
     orderByLastName = order;
     newOrderByLastName = null;
-    window.contacts.Settings.updateOrderingUI();
+    SettingsUI.updateOrderingUI();
   };
 
   var checkNoContacts = function() {
@@ -190,7 +172,7 @@
           });
         },
         null,
-        window.contacts.Settings.navigationHandler,
+        SettingsUI.navigationHandler,
         {
           isDanger: false,
           transitionLevel: EXPORT_TRANSITION_LEVEL,
@@ -479,7 +461,7 @@
               contacts.BulkDelete.performDelete(promise, done);
             },
             null,
-            window.contacts.Settings.navigationHandler,
+            SettingsUI.navigationHandler,
             {
               transitionLevel: DELETE_TRANSITION_LEVEL
             }
@@ -540,7 +522,7 @@
 
   function Settings() {
     Controller.call(this);
-  };
+  }
 
   Settings.prototype = {
     'init': init,
