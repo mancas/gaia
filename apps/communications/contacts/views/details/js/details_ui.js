@@ -59,8 +59,6 @@
 
         self.header.addEventListener('action',
           self.handleBackAction.bind(self));
-        self.editContactButton.addEventListener('click',
-          self.handleEditAction.bind(self));
 
         ContactsButtons.init(self.listContainer, self.contactDetails, null);
 
@@ -181,7 +179,15 @@
 
       this.renderPhoto(contact);
 
+      this.setUpdatePath();
+
       this.dispatchEvent('renderdone');
+    },
+
+    setUpdatePath: function() {
+      this.editContactButton.href =
+        '/contacts/views/form/form.html?action=update&contact=' +
+        this.contactData.id;
     },
 
     setupDisplayName: function(contact) {
