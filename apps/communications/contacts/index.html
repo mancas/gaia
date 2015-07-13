@@ -31,6 +31,8 @@
     <link href="/shared/style/contacts.css" rel="stylesheet">
     <link href="/shared/style/contacts/contacts_buttons.css" rel="stylesheet">
 
+    <link href="/contacts/style/delete_contacts_animation.css" rel="stylesheet">
+
     <!-- <link rel="stylesheet" type="text/css" href="/shared/elements/gaia-icons/gaia-icons.css" /> -->
     <link rel="stylesheet" type="text/css" href="app://theme.gaiamobile.org/shared/elements/gaia-theme/gaia-theme.css" />
 
@@ -71,6 +73,8 @@
     <script defer src="/contacts/js/contacts.js"></script>
     <script defer src="/shared/js/contacts/utilities/image_loader.js"></script>
     <script defer src="/contacts/js/fb_loader.js"></script>
+    <script defer src="/shared/elements/navigation-effect/lib/dom-scheduler.js"></script>
+    <script defer src="/contacts/js/context_menu.js"></script>
     -->
 
     <!-- Web Components -->
@@ -78,9 +82,11 @@
     <script defer src="/shared/js/component_utils.js"></script>
     <script defer src="/shared/elements/gaia_subheader/script.js"></script>
     <script defer src="/shared/elements/gaia-header/dist/gaia-header.js"></script>
+    <script defer src="/shared/elements/navigation-effect/navigation_effect.js"></script>
 
     <link rel="localization" href="/shared/elements/gaia_menu/locales/gaia_menu.{locale}.properties">
     <link rel="localization" href="/shared/elements/gaia_sim_picker/locales/gaia_sim_picker.{locale}.properties">
+    <script defer src='/contacts/js/lib/dom-scheduler.js'></script>
     <!--
     <link rel="stylesheet" type="text/css" href="/shared/elements/gaia_menu/style.css">
     <link rel="stylesheet" type="text/css" href="/shared/elements/gaia_sim_picker/style.css">
@@ -88,6 +94,12 @@
     <script defer src="/shared/elements/gaia_sim_picker/script.js"></script>
     <script defer src="/shared/elements/gaia_switch/script.js"></script>
     -->
+    <script defer src="/shared/elements/gaia-dialog-scheduler/gaia-dialog.js"></script>
+    <script defer src="/shared/elements/gaia-dialog-scheduler/gaia-dialog-menu.js"></script>
+    <script src="/shared/elements/gaia-dialog-scheduler/bower_components/pressed/pressed.js"></script>
+    <link rel="stylesheet" type="text/css" href="/shared/elements/gaia-dialog-scheduler/bower_components/base/base.css">
+    <link rel="stylesheet" type="text/css" href="/shared/elements/gaia-dialog-scheduler/bower_components/gaia-fonts/style.css">
+    <script src="/shared/elements/gaia-dialog-scheduler/bower_components/gaia-component/gaia-component.js"></script>
 
     <script defer src="/shared/js/lazy_loader.js"></script>
     <script defer src="/contacts/js/utilities/performance_helper.js"></script>
@@ -153,7 +165,7 @@
       <section id='view-contacts-list' role="region" data-state="active" class="view view-noscroll view-contacts-list">
         <gaia-header id="contacts-list-header">
           <h1 id="app-title" data-l10n-id="contacts"></h1>
-          <button id="add-contact-button" data-icon="add" data-l10n-id="addButton"></button>
+          <a id="add-contact-button" data-icon="add" class="circular-effect" href="contacts/views/form/index.html" data-l10n-id="addButton"></a>
           <button id="settings-button" data-icon="settings" data-l10n-id="settingsButton"></button>
         </gaia-header>
 
@@ -258,5 +270,11 @@
     <section is="multiple-select-view" id="multiple-select-view" role="region" class="view hidden"></section>
     <gaia-sim-picker id="sim-picker" tabindex="-1"></gaia-sim-picker>
     <iframe id="iframe_curtain" src="/shared/pages/import/curtain.html"></iframe>
+    <gaia-navigation-effect></gaia-navigation-effect>
+    <gaia-dialog-menu>
+      <button class="call-contact" data-icon="call" data-l10n-id="callContact"></button>
+      <button class="share-contact" data-icon="share" data-l10n-id="share-contact"></button>
+      <button class="delete-contact" data-icon="delete" data-l10n-id="deleteContact"></button>
+    </gaia-dialog-menu>
   </body>
 </html>

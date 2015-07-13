@@ -68,6 +68,7 @@ contacts.Search = (function() {
 
     if (typeof source.click === 'function') {
       searchList.addEventListener('click', source.click);
+      searchList.addEventListener('contextmenu', source.click);
     }
 
     searchEnabled = !!defaultEnabled;
@@ -669,6 +670,16 @@ contacts.Search = (function() {
     searchProgress.classList.add('hidden');
   }
 
+  function removeWithAnimation(id) {
+    var contact = searchList.querySelector('li[data-uuid=\"' + id + '\"]');
+
+    window.scheduler.transition(() => {
+      contact.classList.add('fadeOutRight');
+    }, contact, 'animationend').then(() => {
+      searchList.removeChild(contact);
+    });
+  }
+
   return {
     'init': init,
     'invalidateCache': invalidateCache,
@@ -680,6 +691,7 @@ contacts.Search = (function() {
     'isInSearchMode': isInSearchMode,
     'enableSearch': enableSearch,
     'selectRow': selectRow,
-    'updateSearchList': updateSearchList
+    'updateSearchList': updateSearchList,
+    'removeWithAnimation': removeWithAnimation
   };
 })();

@@ -21,6 +21,7 @@
 (function(exports) {
 
   var _activity = null;
+  var _contactID;
 
   function setActivity(activity) {
     _activity = activity;
@@ -100,10 +101,6 @@
     window.addEventListener('toggleFavoriteAction', toggleFavorite);
     window.addEventListener('shareAction', shareContact);
     window.addEventListener('findDuplicatesAction', findDuplicates);
-
-    // TODO: Need to save the oncontactchange event in order to update
-    // the main list when the user go back from this view. It could be done
-    // by saving the event in sessionStorage
   }
 
   function shareContact(evt) {
@@ -142,13 +139,20 @@
     if (_activity) {
       _activity.postResult({});
     } else {
+      console.info('back');
       window.history.back();
     }
   }
 
-  function handleEditAction(evt) {
+  function setContact(contactID) {
+    _contactID = contactID;
+  }
+
+  function handleEditAction() {
     // In the future the navigation will change the URL to navigate
     // to #update view: Bug 1169579
+    window.location.href =
+      '/contacts/views/form/form.html?action=update&contact=' + _contactID;
   }
 
   function dispatchEvent(name, data) {
@@ -157,6 +161,7 @@
 
   exports.DetailsController = {
     'init': init,
-    'setActivity': setActivity
+    'setActivity': setActivity,
+    'setContact': setContact
   };
 })(window);

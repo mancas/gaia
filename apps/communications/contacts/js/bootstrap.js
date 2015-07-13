@@ -45,6 +45,30 @@
     });
   }
 
+  function loadGaiaDialogs() {
+    var prefix = '/shared/elements/gaia_dialog_scheduler/';
+    LazyLoader.load(['/contacts/js/context_menu.js']).then(() => {
+      /*LazyLoader.load([prefix + 'gaia-dialog.js',
+        prefix + 'gaia-dialog-menu.js',
+        prefix + 'bower_components/gaia-component/gaia-component.js',
+        prefix + 'elements/pressed/pressed.js',
+        prefix + 'elements/gaia-icons/gaia-icons.js',
+        prefix + 'elements/base/base.css',
+        prefix + 'elements/gaia-fonts/style.css',
+        prefix + 'elements/gaia-icons/gaia-icons.css']).then(() => {
+          console.info('loaded!');
+          var dialog = document.createElement('gaia-dialog-menu');
+          var btn1 = document.createElement('button');
+          btn1.textContent = 'Call contact';
+          btn1.dataset.icon = 'firefox';
+
+          dialog.appendChild(btn1);
+          document.body.appendChild(dialog);
+        });*/
+        window.CustomContextMenu.init();
+    });
+  }
+
   /**
    * Bootstrap process
    * -----------------
@@ -74,6 +98,7 @@
 
     window.onload = () => {
       utils.PerformanceHelper.visuallyComplete();
+      loadGaiaDialogs();
       loadScripts();
     };
   });
