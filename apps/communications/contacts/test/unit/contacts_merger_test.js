@@ -1,4 +1,4 @@
-/* globals contacts, MockFindMatcher, utils, MocksHelper, MockThumbnailImage  */
+/* globals Merger, MockFindMatcher, utils, MocksHelper, MockThumbnailImage  */
 
 'use strict';
 
@@ -98,7 +98,7 @@ suite('Contacts Merging Tests', function() {
       familyName: ['Müller']
     };
 
-    contacts.Merger.merge(new MasterContact(), toMergeContacts, {
+    Merger.merge(new MasterContact(), toMergeContacts, {
       success: function(result) {
         assert.equal(result.givenName[0], 'Alfred');
         assert.equal(result.givenName[1], 'Alfred Albert');
@@ -116,7 +116,7 @@ suite('Contacts Merging Tests', function() {
     };
     delete toMergeContact.matchings;
 
-    contacts.Merger.merge(new MasterContact(), toMergeContacts, {
+    Merger.merge(new MasterContact(), toMergeContacts, {
       success: function(result) {
         assert.equal(result.givenName[0], 'Alfred');
         assert.equal(result.givenName[1], 'Alfred Albert');
@@ -136,7 +136,7 @@ suite('Contacts Merging Tests', function() {
       }]
     };
 
-    contacts.Merger.merge(new MasterContact(), toMergeContacts, {
+    Merger.merge(new MasterContact(), toMergeContacts, {
       success: function(result) {
         assert.equal(result.givenName[0], 'Alfred');
         assert.equal(result.familyName[0], 'Müller');
@@ -160,7 +160,7 @@ suite('Contacts Merging Tests', function() {
     masterContact.givenName = null;
     masterContact.familyName = null;
 
-    contacts.Merger.merge(masterContact, toMergeContacts, {
+    Merger.merge(masterContact, toMergeContacts, {
       success: function(result) {
         assert.equal(result.givenName[0], 'Alfred');
         assert.equal(result.familyName[0], 'Müller von Bismarck');
@@ -184,7 +184,7 @@ suite('Contacts Merging Tests', function() {
 
     masterContact.givenName = null;
 
-    contacts.Merger.merge(masterContact, toMergeContacts, {
+    Merger.merge(masterContact, toMergeContacts, {
       success: function(result) {
         assert.isTrue(result.givenName.length === 0);
         assert.equal(result.familyName[0], 'Müller');
@@ -208,7 +208,7 @@ suite('Contacts Merging Tests', function() {
 
     masterContact.familyName = null;
 
-    contacts.Merger.merge(masterContact, toMergeContacts, {
+    Merger.merge(masterContact, toMergeContacts, {
       success: function(result) {
         assert.isTrue(result.familyName.length === 0);
         assert.equal(result.givenName[0], 'Alfred');
@@ -232,7 +232,7 @@ suite('Contacts Merging Tests', function() {
         category: ['sim']
       };
 
-      contacts.Merger.merge(masterContact, toMergeContacts, {
+      Merger.merge(masterContact, toMergeContacts, {
         success: function(result) {
           assert.isTrue(!result.givenName[0]);
           assert.equal(result.familyName[0], 'Smith');
@@ -256,7 +256,7 @@ suite('Contacts Merging Tests', function() {
         category: ['sim']
       };
 
-      contacts.Merger.merge(masterContact, toMergeContacts, {
+      Merger.merge(masterContact, toMergeContacts, {
         success: function(result) {
           assert.isTrue(!result.familyName[0]);
           assert.equal(result.givenName[0], 'Lionel');
@@ -276,7 +276,7 @@ suite('Contacts Merging Tests', function() {
         category: ['sim']
       };
 
-      contacts.Merger.merge(masterContact, toMergeContacts, {
+      Merger.merge(masterContact, toMergeContacts, {
         success: function(result) {
           assert.equal(masterContact.familyName[0], result.familyName[0]);
           assert.equal(masterContact.givenName[0], result.givenName[0]);
@@ -299,7 +299,7 @@ suite('Contacts Merging Tests', function() {
       }]
     };
 
-    contacts.Merger.merge(new MasterContact(), toMergeContacts, {
+    Merger.merge(new MasterContact(), toMergeContacts, {
       success: function(result) {
         assert.lengthOf(result.tel, 2);
         // email is left untouched
@@ -322,7 +322,7 @@ suite('Contacts Merging Tests', function() {
 
     var masterContact = new MasterContact();
 
-    contacts.Merger.merge(masterContact, toMergeContacts, {
+    Merger.merge(masterContact, toMergeContacts, {
       success: function(result) {
         assert.lengthOf(result.tel, 1);
 
@@ -352,7 +352,7 @@ suite('Contacts Merging Tests', function() {
 
     var masterContact = new MasterContact();
 
-    contacts.Merger.merge(masterContact, toMergeContacts, {
+    Merger.merge(masterContact, toMergeContacts, {
       success: function(result) {
         assert.lengthOf(result.tel, 1);
         assertFieldValues(result.tel, [masterContact.tel[0].value]);
@@ -385,7 +385,7 @@ suite('Contacts Merging Tests', function() {
 
     var masterContact = new MasterContact();
 
-    contacts.Merger.merge(masterContact, toMergeContacts, {
+    Merger.merge(masterContact, toMergeContacts, {
       success: function(result) {
         assert.lengthOf(result.tel, 1);
         assertFieldValues(result.tel, [masterContact.tel[0].value]);
@@ -406,7 +406,7 @@ suite('Contacts Merging Tests', function() {
       }]
     };
 
-    contacts.Merger.merge(new MasterContact(), toMergeContacts, {
+    Merger.merge(new MasterContact(), toMergeContacts, {
       success: function(result) {
         assert.lengthOf(result.email, 2);
         // tel is left untouched
@@ -430,7 +430,7 @@ suite('Contacts Merging Tests', function() {
 
     var masterContact = new MasterContact();
 
-    contacts.Merger.merge(masterContact, toMergeContacts, {
+    Merger.merge(masterContact, toMergeContacts, {
       success: function(result) {
         assert.lengthOf(result.email, 1);
 
@@ -450,7 +450,7 @@ suite('Contacts Merging Tests', function() {
 
     var masterContact = new MasterContact();
 
-    contacts.Merger.merge(masterContact, toMergeContacts, {
+    Merger.merge(masterContact, toMergeContacts, {
       success: function(result) {
         assert.lengthOf(result.email, 1);
 
@@ -471,7 +471,7 @@ suite('Contacts Merging Tests', function() {
 
     var masterContact = new MasterContact();
 
-    contacts.Merger.merge(masterContact, toMergeContacts, {
+    Merger.merge(masterContact, toMergeContacts, {
       success: function(result) {
         assert.lengthOf(result.note, 2);
 
@@ -498,7 +498,7 @@ suite('Contacts Merging Tests', function() {
       }]
     };
 
-    contacts.Merger.merge(new MasterContact(), toMergeContacts, {
+    Merger.merge(new MasterContact(), toMergeContacts, {
       success: function(result) {
         assert.lengthOf(result.adr, 2);
         assertFieldValues(result.adr, ['work', 'home'], 'type');
@@ -518,7 +518,7 @@ suite('Contacts Merging Tests', function() {
 
     var masterContact = new MasterContact();
 
-    contacts.Merger.merge(masterContact, toMergeContacts, {
+    Merger.merge(masterContact, toMergeContacts, {
       success: function(result) {
         assert.lengthOf(result.org, 1);
         assertFieldValues(result.org, [masterContact.org[0]]);
@@ -539,7 +539,7 @@ suite('Contacts Merging Tests', function() {
     var masterContact = new MasterContact();
     masterContact.org = null;
 
-    contacts.Merger.merge(masterContact, toMergeContacts, {
+    Merger.merge(masterContact, toMergeContacts, {
       success: function(result) {
         assert.lengthOf(result.org, 1);
         assertFieldValues(result.org, [toMergeContact.matchingContact.org[0]]);
@@ -557,7 +557,7 @@ suite('Contacts Merging Tests', function() {
       photo: [aPhoto1]
     };
 
-    contacts.Merger.merge(new MasterContact(), toMergeContacts, {
+    Merger.merge(new MasterContact(), toMergeContacts, {
       success: function(result) {
         assert.lengthOf(result.photo, 1);
         assertPhoto(result.photo[0],
@@ -579,7 +579,7 @@ suite('Contacts Merging Tests', function() {
 
     masterContact.photo = [aPhoto2]; // Different photo
 
-    contacts.Merger.merge(masterContact, toMergeContacts, {
+    Merger.merge(masterContact, toMergeContacts, {
       success: function(result) {
         assert.lengthOf(result.photo, 1);
         assertPhoto(result.photo[0], masterContact.photo[0]);
@@ -601,7 +601,7 @@ suite('Contacts Merging Tests', function() {
 
     masterContact.photo = [aPhoto2]; // Different photo
 
-    contacts.Merger.merge(masterContact, toMergeContacts, {
+    Merger.merge(masterContact, toMergeContacts, {
       success: function(result) {
         assert.lengthOf(result.photo, 1);
         assertPhoto(result.photo[0], masterContact.photo[0]);
@@ -619,7 +619,7 @@ suite('Contacts Merging Tests', function() {
 
     masterContact.category = ['category1', 'category2'];
 
-    contacts.Merger.merge(masterContact, toMergeContacts, {
+    Merger.merge(masterContact, toMergeContacts, {
       success: function(result) {
         assert.lengthOf(result.category, 2);
         assertFieldValues(result.category, masterContact.category);
@@ -667,7 +667,7 @@ suite('Contacts Merging Tests', function() {
       }]
     };
 
-    contacts.Merger.merge(new MasterContact(), toMergeContacts, {
+    Merger.merge(new MasterContact(), toMergeContacts, {
       success: function(result) {
         assertFieldValues(result.givenName, ['Alfred']);
         assertFieldValues(result.familyName, ['Müller']);
@@ -694,7 +694,7 @@ suite('Contacts Merging Tests', function() {
   test('Merge duplicated contact', function(done) {
     var contactToMerge = new MasterContact();
 
-    contacts.Merger.merge(
+    Merger.merge(
       new MasterContact(),
       [
         {

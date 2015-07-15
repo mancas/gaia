@@ -1,4 +1,4 @@
-/* global VCardReader, ConfirmDialog, contacts, LazyLoader, Loader */
+/* global VCardReader, ConfirmDialog, Merger, LazyLoader, Loader */
 /* global Matcher */
 'use strict';
 
@@ -13,7 +13,6 @@ utils.importFromVcard = function(file, callback) {
 
   var MERGE_DEPENDENCIES = [
     '/shared/js/simple_phone_matcher.js',
-    '/shared/js/contacts/merger_adapter.js',
     '/shared/js/contacts/contacts_merger.js',
     '/shared/js/contacts/contacts_matcher.js'
   ];
@@ -112,7 +111,7 @@ utils.importFromVcard = function(file, callback) {
                 },
                 error: _doContinue
               };
-              contacts.adaptAndMerge(contact, matches, callbacks);
+              Merger.adaptAndMerge(contact, matches, callbacks);
             },
             onmismatch: function() {
               var req = navigator.mozContacts.save(contact);

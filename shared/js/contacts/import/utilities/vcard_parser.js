@@ -1,4 +1,4 @@
-/* global contacts, LazyLoader, utils, Rest, MimeMapper */
+/* global Merger, LazyLoader, utils, Rest, MimeMapper */
 /* global Matcher */
 /* exported VCFReader */
 
@@ -646,7 +646,6 @@ var VCFReader = (function _VCFReader() {
       '/shared/js/contacts/contacts_matcher.js',
       '/shared/js/contacts/contacts_merger.js',
       '/shared/js/contacts/utilities/image_thumbnail.js',
-      '/shared/js/contacts/merger_adapter.js',
       '/shared/js/contacts/utilities/http_rest.js'
     ], function() {
       // Start processing the text
@@ -723,7 +722,7 @@ var VCFReader = (function _VCFReader() {
             },
             error: afterSaveFn
           };
-          contacts.adaptAndMerge(contact, matches, callbacks);
+          Merger.adaptAndMerge(contact, matches, callbacks);
         },
 
         onmismatch: function() {

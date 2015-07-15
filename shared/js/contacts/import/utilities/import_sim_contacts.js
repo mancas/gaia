@@ -1,5 +1,5 @@
 /*jshint loopfunc: true */
-/* global mozContact, LazyLoader, utils, contacts */
+/* global mozContact, LazyLoader, utils, Merger */
 /* global Matcher */
 /* exported SimContactsImporter */
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- /
@@ -103,8 +103,7 @@ function SimContactsImporter(targetIcc) {
       '/shared/js/simple_phone_matcher.js',
       '/shared/js/contacts/contacts_matcher.js',
       '/shared/js/contacts/contacts_merger.js',
-      '/shared/js/contacts/utilities/image_thumbnail.js',
-      '/shared/js/contacts/merger_adapter.js'
+      '/shared/js/contacts/utilities/image_thumbnail.js'
     ], function loaded() {
       loadedMatch = true;
       document.dispatchEvent(new CustomEvent('matchLoaded'));
@@ -211,7 +210,7 @@ function SimContactsImporter(targetIcc) {
             }
           };
 
-          contacts.adaptAndMerge(this, results, mergeCbs);
+          Merger.adaptAndMerge(this, results, mergeCbs);
         }.bind(contact),
         onmismatch: function() {
           saveContact(this);

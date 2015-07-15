@@ -1,7 +1,7 @@
 'use strict';
 
 /* exported MultiContact */
-/* globals Promise, LazyLoader, contacts */
+/* globals Promise, LazyLoader, Merger */
 
 // ATTENTION: This library lazy loads contacts_merger.js
 
@@ -128,7 +128,7 @@ var MultiContact = (function() {
         function() {
           var matchings = createMatchingContacts(results);
 
-          contacts.Merger.inMemoryMerge(results[0], matchings).then(
+          Merger.inMemoryMerge(results[0], matchings).then(
             function success(mergedResult) {
               mergedResult.id = options.targetId;
               resolve(mergedResult);

@@ -1,7 +1,7 @@
 'use strict';
-/* global contacts */
 /* global utils */
 /* global Matcher */
+/* global Merger */
 
 (function() {
   var CHUNK_SIZE = 5;
@@ -137,7 +137,7 @@
         onmatch: function(matches) {
           numMergedDuplicated++;
 
-          contacts.adaptAndMerge(this, matches, {
+          Merger.adaptAndMerge(this, matches, {
             success: successCb,
             error: errorCb
           });

@@ -1,7 +1,7 @@
 'use strict';
 
 /* exported MergeHelper */
-/* globals LazyLoader, ICEData, contacts, ContactsService */
+/* globals LazyLoader, ICEData, ContactsService, Merger */
 
 /**
  *
@@ -129,7 +129,7 @@ var MergeHelper = (function() {
               }
             };
 
-            var mergerFunction = contacts.Merger.merge.bind(null,
+            var mergerFunction = Merger.merge.bind(null,
                                                 contact, mergeList, callbacks);
             // We set the new ICEContact as the merged one
             // As a result, the contactChange events associated to the

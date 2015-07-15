@@ -1,4 +1,4 @@
-/* global Contacts, contacts, utils, LazyLoader */
+/* global Contacts, Merger, utils, LazyLoader */
 /* global ContactsService */
 /* global Matcher */
 
@@ -40,8 +40,7 @@ Contacts.MultipleSelect = (function() {
       '/shared/js/contacts/import/utilities/status.js',
       '/shared/js/simple_phone_matcher.js',
       '/shared/js/contacts/contacts_matcher.js',
-      '/shared/js/contacts/contacts_merger.js',
-      '/shared/js/contacts/merger_adapter.js'
+      '/shared/js/contacts/contacts_merger.js'
     ];
     LazyLoader.load(DEPENDENCIES, function() {
       contactsToImport.forEach((contact, index) => {
@@ -54,7 +53,7 @@ Contacts.MultipleSelect = (function() {
               },
               error: doContinue
             };
-            contacts.adaptAndMerge(contact, matches, callbacks);
+            Merger.adaptAndMerge(contact, matches, callbacks);
           },
           onmismatch: () => {
 

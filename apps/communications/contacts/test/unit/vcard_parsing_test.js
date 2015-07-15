@@ -27,10 +27,6 @@ function toDataUri(photo, cb) {
   reader.onloadend = cb.bind(null, reader);
 }
 
-if (!window.contacts) {
-  window.contacts = null;
-}
-
 if (!window.utils) {
   window.utils = null;
 }
@@ -76,7 +72,7 @@ suite('vCard parsing settings', function() {
 
   mocksHelperForVCardParsing.attachTestHelpers();
 
-  var realMozContacts, realMatcher, realUtils, realRest, realMerge;
+  var realMozContacts, realMatcher, realUtils, realRest, realMerger;
   suite('SD Card import', function() {
     setup(function() {
       navigator.mozContacts.contacts = [];
@@ -99,12 +95,13 @@ suite('vCard parsing settings', function() {
         return req;
       };
 
-      window.contacts = window.contacts || {};
       realMatcher = window.Matcher;
       window.Matcher = MockMatcher;
 
-      realMerge = window.contacts.adaptAndMerge;
-      window.contacts.adaptAndMerge = MockAdaptAndMerge;
+      realMerger = window.Merger;
+      window.Merger = {
+        adaptAndMerge: MockAdaptAndMerge
+      };
 
       realUtils = window.utils;
       window.utils = {
@@ -128,7 +125,7 @@ suite('vCard parsing settings', function() {
     suiteTeardown(function() {
       navigator.mozContacts = realMozContacts;
       window.Matcher = realMatcher;
-      window.contacts.adaptAndMerge = realMerge;
+      window.Merger = realMerger;
       window.utils = realUtils;
       window.Rest = realRest;
     });
@@ -650,7 +647,7 @@ suite('vCard parsing settings', function() {
        function(contact, type, cbs) {
         cbs.onmatch([]);
       });
-      var mergeStub = sinon.stub(window.contacts, 'adaptAndMerge',
+      var mergeStub = sinon.stub(window.Merger, 'adaptAndMerge',
        function (contact, matches, cbs) {
         cbs.success({id: 1});
       });
