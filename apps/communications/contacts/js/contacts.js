@@ -15,6 +15,7 @@
 /* global HeaderUI */
 /* global Search */
 /* global ContactsService */
+/* global ParamUtils */
 
 /* exported COMMS_APP_ORIGIN */
 /* exported SCALE_RATIO */
@@ -38,8 +39,7 @@ var Contacts = (function() {
   var detailsReady = false;
   var formReady = false;
 
-  var currentContact = {},
-      currentFbContact;
+  var currentContact = {};
 
   var contactsList;
   var contactsDetails;
@@ -86,26 +86,22 @@ var Contacts = (function() {
   };
 
   var contactListClickHandler = function originalHandler(id) {
-    initDetails(function onDetailsReady() {
-      ContactsService.get(id, function findCb(contact, fbContact) {
 
-        currentContact = contact;
-        currentFbContact = fbContact;
+    if (!ActivityHandler.currentlyHandling) {
+      window.location.href = ParamUtils.generateUrl('detail', {contact:id});
+      return;
+    }
 
-        if (ActivityHandler.currentActivityIsNot(['import'])) {
-          if (ActivityHandler.currentActivityIs(['pick'])) {
-            ActivityHandler.dataPickHandler(currentFbContact || currentContact);
-          }
-          return;
+    ContactsService.get(id, function findCb(contact) {
+      currentContact = contact;
+      if (ActivityHandler.currentActivityIsNot(['import'])) {
+        if (ActivityHandler.currentActivityIs(['pick'])) {
+          ActivityHandler.dataPickHandler(currentContact);
         }
+        return;
+      }
 
-        contactsDetails.render(currentContact, currentFbContact);
-        if (window.Search && Search.isInSearchMode()) {
-          MainNavigation.go('view-contact-details', 'go-deeper-search');
-        } else {
-          MainNavigation.go('view-contact-details', 'go-deeper');
-        }
-      });
+      window.location.href = ParamUtils.generateUrl('detail', {contact:id});
     });
   };
 
@@ -130,8 +126,7 @@ var Contacts = (function() {
   };
 
   var showAddContact = function showAddContact() {
-    window.location.href =
-      '/contacts/views/form/form.html?action=new';
+    window.location.href = ParamUtils.generateUrl('form',{action: 'new'});
   };
 
   var loadFacebook = function loadFacebook(callback) {

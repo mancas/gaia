@@ -1593,19 +1593,8 @@ contacts.List = (function() {
       return;
     }
 
-    // Passed an ID, so look up contact
-    LazyLoader.load([
-     '/contacts/js/fb/fb_init.js',
-     '/contacts/js/fb_loader.js'
-    ], () => {
-      ContactsService.get(idOrContact, function(contact, fbData) {
-        var enrichedContact = null;
-        if (fb.isFbContact(contact)) {
-          var fbContact = new fb.Contact(contact);
-          enrichedContact = fbContact.merge(fbData);
-        }
-        refreshContact(contact, enrichedContact, callback);
-      });
+    ContactsService.get(idOrContact, function(contact) {
+      refreshContact(contact, null, callback);
     });
   };
 
