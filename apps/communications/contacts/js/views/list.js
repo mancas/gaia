@@ -197,6 +197,7 @@ contacts.List = (function() {
 
     groupsList = document.getElementById('groups-list');
     groupsList.addEventListener('click', onClickHandler);
+    groupsList.addEventListener('contextmenu', onClickHandler);
 
     initConfiguration();
 
@@ -1501,10 +1502,14 @@ contacts.List = (function() {
     // We have a node list, not an array, and we want to walk it
     Array.prototype.forEach.call(items, function removeItem(item) {
       var ol = item.parentNode;
-      ol.removeChild(item);
-      if (ol.children.length < 1) {
-        hideGroup(ol.dataset.group);
-      }
+      window.scheduler.transition(() => {
+        item.classList.add('fadeOutRight');
+      }, item, 'animationend').then(() => {
+        ol.removeChild(item);
+        if (ol.children.length < 1) {
+          hideGroup(ol.dataset.group);
+        }
+      });
     });
     if (photosById[id]) {
       delete photosById[id];
@@ -1636,12 +1641,22 @@ contacts.List = (function() {
     var parentDataset = target.parentNode ?
                           (target.parentNode.dataset || {}) : {};
     var uuid = dataset.uuid || parentDataset.uuid;
-    if (uuid) {
-      callbacks.forEach(function(callback) {
-        callback(uuid);
-      });
+    switch(evt.type) {
+      case 'click':
+        if (uuid) {
+          callbacks.forEach(function(callback) {
+            callback(uuid);
+          });
+        }
+        evt.preventDefault();
+        break;
+      case 'contextmenu':
+        var dialog = document.querySelector('gaia-dialog-menu');
+        dialog.open(evt);
+        window.CustomContextMenu.uuid = uuid;
+        evt.preventDefault();
+        break;
     }
-    evt.preventDefault();
   }
 
   // Reset the content of the list to 0
