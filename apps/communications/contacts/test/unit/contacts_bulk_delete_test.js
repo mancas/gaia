@@ -29,7 +29,7 @@ suite('contacts_bulk_delete.js', function() {
 
   var promise = {};
 
-  var overlayShowSpy, overlayHideSpy, confirmShowSpy, confirmHideSpy, spies;
+  var confirmShowSpy, confirmHideSpy, spies;
 
   mocksHelperForContactsBulkDelete.attachTestHelpers();
 
@@ -59,11 +59,9 @@ suite('contacts_bulk_delete.js', function() {
   });
 
   setup(function() {
-    overlayShowSpy = sinon.spy(window.utils.overlay, 'show');
-    overlayHideSpy = sinon.spy(window.utils.overlay, 'hide');
     confirmShowSpy = sinon.spy(ConfirmDialog, 'show');
     confirmHideSpy = sinon.spy(ConfirmDialog, 'hide');
-    spies = [overlayShowSpy, overlayHideSpy, confirmShowSpy, confirmHideSpy];
+    spies = [confirmShowSpy, confirmHideSpy];
   });
 
   teardown(function() {
@@ -75,13 +73,10 @@ suite('contacts_bulk_delete.js', function() {
   function assertPerformDeleteSuccess(numberOfContacts) {
     contacts.BulkDelete.performDelete(promise);
 
-    assert.isTrue(overlayShowSpy.calledWith('preparing-contacts', 'spinner'));
-
     promise.onsuccess({
       length: numberOfContacts
     });
 
-    assert.isTrue(overlayHideSpy.called);
     assert.isTrue(confirmShowSpy.called);
     assert.isNull(ConfirmDialog.title);
     assert.deepEqual(ConfirmDialog.text,
@@ -107,14 +102,6 @@ suite('contacts_bulk_delete.js', function() {
     // Cancelled by user
     ConfirmDialog.executeNo();
     assert.isTrue(confirmHideSpy.called);
-  });
-
-  test('call performDelete but the promise fails', function() {
-    contacts.BulkDelete.performDelete(promise);
-    assert.isTrue(overlayShowSpy.calledWith('preparing-contacts', 'spinner'));
-
-    promise.onerror();
-    assert.isTrue(overlayHideSpy.called);
   });
 
 });

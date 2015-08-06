@@ -93,14 +93,9 @@ contacts.BulkDelete = (function() {
   // Start the delete of the contacts
   var performDelete = function performDelete(promise, done) {
     requireOverlay(function onOverlay() {
-      utils.overlay.show('preparing-contacts', 'spinner');
       promise.onsuccess = function onSuccess(ids) {
-        utils.overlay.hide();
         showConfirm(ids.length).then(
                           contacts.BulkDelete.doDelete.bind(null, ids, done));
-      };
-      promise.onerror = function onError() {
-        utils.overlay.hide();
       };
     });
   };
