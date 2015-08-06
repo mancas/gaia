@@ -1135,7 +1135,7 @@
     var uuid = dataset.uuid || parentDataset.uuid;
     if (uuid) {
       if (_action && _action === 'pick' || _action === 'update') {
-        selectList(uuid);
+        selectList(uuid, _params);
         return;
       }
 
@@ -1752,6 +1752,8 @@
       }
       window.location.hash = hash;
     });
+
+
   }
 
   // Given a UUID we will call the callback function

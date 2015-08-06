@@ -1,5 +1,18 @@
 (function(exports) {
   'use strict';
+  var _activity;
+
+  function pick(evt) {
+    if (_activity) {
+      _activity.postResult(evt.detail.contact);
+    }
+  }
+
+  function onItemClick(evt) {
+    if (evt.detail && evt.detail.uuid) {
+      clickHandler(evt.detail.uuid);
+    }
+  }
 
   function clickHandler(uuid) {
     console.info('awesome!');
@@ -8,13 +21,11 @@
 
   exports.ListController = {
     'init': function init() {
-      window.addEventListener('itemClicked', this.onItemClick);
+      window.addEventListener('itemClicked', onItemClick);
+      window.addEventListener('pickAction', pick);
     },
-    'onItemClick': function onItemClick(evt) {
-      console.info(evt, new Error().stack);
-      if (evt.detail && evt.detail.uuid) {
-        clickHandler(evt.detail.uuid);
-      }
+    'setActivity': function setActivity(activity) {
+      _activity = activity;
     }
   };
 })(window);
