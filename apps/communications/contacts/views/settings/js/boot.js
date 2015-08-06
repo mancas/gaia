@@ -6,7 +6,8 @@ window.addEventListener('DOMContentLoaded', function() {
     '/shared/js/l10n.js'], function() {
     LazyLoader.load([
       document.getElementById('settings-wrapper'),
-      document.getElementById('loading-overlay')
+      document.getElementById('loading-overlay'),
+      document.getElementById('confirmation-message')
     ], function() {
       // TODO Add if needed
     });
@@ -21,6 +22,13 @@ window.onload = function() {
 
   var dependencies = [
     '/contacts/js/navigation.js',
+    '/contacts/views/settings/js/main_navigation.js',
+    '/contacts/js/activities.js',
+    '/contacts/js/fb_loader.js',
+    '/shared/js/async_storage.js',
+    '/shared/elements/gaia_switch/script.js',
+    '/contacts/js/utilities/normalizer.js',
+    '/contacts/js/service_extensions.js',
     '/shared/js/contacts/utilities/event_listeners.js',
     '/shared/js/contacts/import/utilities/sdcard.js',
     '/contacts/js/utilities/cookie.js',
@@ -36,8 +44,12 @@ window.onload = function() {
     '/contacts/views/settings/js/settings_controller.js'
   ];
 
-  LazyLoader.load(dependencies, function() {
-    SettingsUI.init();
-    Settings.init();
+  LazyLoader.load(['/contacts/js/fb_loader.js'], function() {
+    fbLoader.load();
+    LazyLoader.load(dependencies, function() {
+      console.info("loaded");
+      SettingsUI.init();
+      Settings.init();
+    });
   });
 };

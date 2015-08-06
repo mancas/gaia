@@ -18,59 +18,39 @@
     importSettingsHeader,
     orderCheckBox,
     orderItem,
-    setICEButton,
     importSettingsPanel,
     importSettingsTitle,
-    importContacts,
-    exportContacts,
     importOptions,
     exportOptions,
     importLiveOption,
     importGmailOption,
     importSDOption,
-    exportSDOption,
-    bulkDeleteButton;
+    exportSDOption;
 
-  // Initialise the settings screen (components, listeners ...)
-  var init = function initialize() {
-    initContainers();
-    // To avoid any race condition we listen for online events once
-    // containers have been initialized
-    window.addEventListener('online', checkOnline);
-    window.addEventListener('offline', checkOnline);
-    utils.listeners.add({
-      '#settings-close': hideSettings
-    });
+  //////////////////////////////////////////////////
 
-    // Subscribe to events related to change state in the sd card
-    utils.sdcard.subscribeToChanges('check_sdcard', function(value) {
-      updateStorageOptions(utils.sdcard.checkStorageCard());
-    });
+  var doneButton,
+    importContacts,
+    exportContacts,
+    setICEButton,
+    bulkDeleteButton,
+    orderByLastName,
+    newOrderByLastName = null;
 
-    window.addEventListener('timeformatchange', updateTimestamps);
-    window.addEventListener('contactsimportdone', onImportDone);
-  };
-
-  var hideSettings = function hideSettings() {
-    SettingsUI.close();
-  };
-
-  var updateOrderingUI = function updateOrderingUI() {
-    var value = Settings.newOrderByLastName === null ?
-      Settings.orderByLastName : Settings.newOrderByLastName;
-    orderCheckBox.checked = value;
-    orderItem.setAttribute('aria-checked', value);
-  };
-
-  var updateImportTitle = function updateImportTitle(l10nString) {
-    importSettingsTitle.setAttribute('data-l10n-id', l10nString);
-  };
-
-  // Initialises variables and listener for the UI
-  var initContainers = function initContainers() {
+  function cacheElements() {
+    //Principal DOM
+    doneButton = document.getElementById('settings-close');
+    importContacts = document.getElementById('importContacts');
+    exportContacts = document.getElementById('exportContacts');
+    setICEButton = document.getElementById('set-ice');
+    bulkDeleteButton = document.getElementById('bulkDelete');
+    document.querySelector('#settings-article').dataset.state = 'fb-disabled';
     orderItem = document.getElementById('settingsOrder');
     orderCheckBox = orderItem.querySelector('[name="order.lastname"]');
-    orderItem.addEventListener('click', onOrderingChange.bind(this));
+    //Import DOM
+    importSettingsHeader = document.getElementById('import-settings-header');
+
+    //OLD
     // Creating a navigation handler from this view
     navigationHandler = new navigationStack('view-settings');
 
@@ -81,9 +61,6 @@
     importSettingsTitle = document.getElementById('import-settings-title');
     importLiveOption = document.getElementById('import-live-option');
     importGmailOption = document.getElementById('import-gmail-option');
-
-    // ICE view
-    setICEButton = document.getElementById('set-ice');
 
     /*
      * Adding listeners
@@ -96,66 +73,61 @@
         checkNoContacts();
       }
     });
+  }
 
-    // Navigation back
-    importSettingsHeader = document.getElementById('import-settings-header');
-    importSettingsHeader.addEventListener('action', importSettingsBackHandler);
+  //Close
 
-    // Handlers for the navigation through the panels
-    importContacts = document.getElementById('importContacts');
-    importContacts.firstElementChild.
-      addEventListener('click', importContactsHandler);
+  var closeHandler = function closeHandler() {
+    window.dispatchEvent(new Event('close-ui'));
+  }
 
-    exportContacts = document.getElementById('exportContacts');
-    exportContacts.firstElementChild.
-      addEventListener('click', exportContactsHandler);
+  //Order
 
-    // Handlers for the actions related with EXPORT/IMPORT
-    importOptions = document.getElementById('import-options');
-    importOptions.addEventListener('click', Settings.importOptionsHandler);
-
-    exportOptions = document.getElementById('export-options');
-    exportOptions.addEventListener('click', Settings.exportOptionsHandler);
-
-    // ICE view
-    setICEButton.addEventListener('click', showICEScreen);
-
-    // Bulk delete
-    bulkDeleteButton = document.getElementById('bulkDelete');
-    bulkDeleteButton.addEventListener('click', Settings.bulkDeleteHandler);
-    document.querySelector('#settings-article').dataset.state = 'fb-disabled';
+  var onOrderingChange = function onOrderingChange(evt) {
+    newOrderByLastName = orderCheckBox.checked;
+    if(newOrderByLastName !== orderByLastName){
+      sessionStorage.setItem('orderchange', true);
+    } else {
+      sessionStorage.setItem('orderchange', null);
+    }
+    utils.cookie.update({order: newOrderByLastName});
+    updateOrderingUI();
+    Cache.evict();
   };
 
-  // UI event handlers
-  function importSettingsBackHandler() {
-    navigationHandler.back(function navigateBackHandler() {
-        // Removing the previous assigned style for having
-        // a clean view
-        importSettingsPanel.classList.remove('export');
+  //Import
+
+  var importHandler = function importHandler() {
+    importSettingsPanel.classList.remove('export');
+    importSettingsPanel.classList.add('import');
+    updateImportTitle('importContactsTitle');
+    navigationHandler.go('import-settings', 'right-left');
+  }
+
+  var updateImportTitle = function updateImportTitle(l10nString) {
+    importSettingsTitle.setAttribute('data-l10n-id', l10nString);
+  };
+
+  //Export
+
+  var exportHandler = function exportHandler() {
+    // Hide elements for import and transition
+    LazyLoader.load(['/contacts/js/export/contacts_exporter.js'], loadSearch);
+
+    function loadSearch() {
+      Loader.view('search', function() {
         importSettingsPanel.classList.remove('import');
-    });
+        importSettingsPanel.classList.add('export');
+        updateImportTitle('exportContactsTitle');
+        navigationHandler.go('import-settings', 'right-left');
+      });
+    }
   }
 
-  function importContactsHandler() {
-      // Hide elements for export and transition
-      importSettingsPanel.classList.remove('export');
-      importSettingsPanel.classList.add('import');
-      updateImportTitle('importContactsTitle');
-      navigationHandler.go('import-settings', 'right-left');
-  }
+  //ICE
 
-  function exportContactsHandler() {
-      // Hide elements for import and transition
-      LazyLoader.load(['/contacts/js/export/contacts_exporter.js'], loadSearch);
-
-      function loadSearch() {
-        Loader.view('search', function() {
-          importSettingsPanel.classList.remove('import');
-          importSettingsPanel.classList.add('export');
-          updateImportTitle('exportContactsTitle');
-          navigationHandler.go('import-settings', 'right-left');
-        });
-      }
+  var iceHandler = function iceHandler() {
+    showICEScreen();
   }
 
   function showICEScreen(cb) {
@@ -171,13 +143,78 @@
     });
   }
 
-  // Options checking & updating
+  //Delete
 
-  var checkSIMCard = function checkSIMCard() {
-    var statuses = IccHandler.getStatus();
-    statuses.forEach(function onStatus(status) {
-      enableSIMOptions(status.iccId, status.cardState);
+  var deleteHandler = function deleteHandler() {
+    window.dispatchEvent(new Event('delete-ui'));
+  }
+
+  var importSettingsBackHandler = function importSettingsBackHandler() {
+    navigationHandler.back(function navigateBackHandler() {
+        // Removing the previous assigned style for having
+        // a clean view
+        importSettingsPanel.classList.remove('export');
+        importSettingsPanel.classList.remove('import');
     });
+  }
+
+  //Listeners
+
+  var addListeners = function addListeners() {
+    orderCheckBox.addEventListener(
+      'change', 
+      onOrderingChange.bind(this)
+    );
+
+    doneButton.addEventListener(
+      'click',
+      closeHandler
+    );
+
+    importContacts.addEventListener(
+      'click',
+      importHandler
+    );
+
+    exportContacts.addEventListener(
+      'click',
+      exportHandler
+    );
+
+    setICEButton.addEventListener(
+      'click',
+      iceHandler
+    );
+
+    // MAIN ISSUE HERE! We need to communicate with LIST
+    // and show the list with EDIT mode.
+    bulkDeleteButton.addEventListener(
+      'click',
+      deleteHandler
+    );
+
+    importSettingsHeader.addEventListener('action', importSettingsBackHandler);
+  }
+
+  //////////////////////////////////////////////////
+
+  // Initialise the settings screen (components, listeners ...)
+  var init = function initialize() {
+    cacheElements();
+    addListeners();
+    getData();
+    // To avoid any race condition we listen for online events once
+    // containers have been initialized
+    window.addEventListener('online', checkOnline);
+    window.addEventListener('offline', checkOnline);
+
+    // Subscribe to events related to change state in the sd card
+    utils.sdcard.subscribeToChanges('check_sdcard', function(value) {
+      updateStorageOptions(utils.sdcard.checkStorageCard());
+    });
+
+    window.addEventListener('timeformatchange', updateTimestamps);
+    window.addEventListener('contactsimportdone', onImportDone);
   };
 
   // Disables/Enables an option and show the error if needed
@@ -250,32 +287,26 @@
 
   };
 
-  // Listens for any change in the ordering preferences
-  var onOrderingChange = function onOrderingChange(evt) {
-    Settings.newOrderByLastName = !orderCheckBox.checked;
-    utils.cookie.update({order: Settings.newOrderByLastName});
+  var updateOrderingUI = function updateOrderingUI() {
+    var value = newOrderByLastName === null ? orderByLastName :
+      newOrderByLastName;
+    orderCheckBox.checked = value;
+    orderCheckBox.setAttribute('aria-checked', value);
+  };
+
+  // Get the different values that we will show in the app
+  var getData = function getData() {
+    var config = utils.cookie.load();
+    var order = config ? config.order : false;
+    orderByLastName = order;
+    newOrderByLastName = null;
     updateOrderingUI();
-    Cache.evict();
   };
 
   function onImportDone(evt) {
     updateTimestamps();
     checkNoContacts();
   }
-
-  // Dismiss settings window and execute operations if values got modified
-  var close = function close() {
-    if (Settings.newOrderByLastName != null &&
-        Settings.newOrderByLastName != Settings.orderByLastName && 
-        contacts.List) {
-      contacts.List.setOrderByLastName(Settings.newOrderByLastName);
-      // Force the reset of the dom, we know that we changed the order
-      contacts.List.load(null, true);
-      Settings.orderByLastName = Settings.newOrderByLastName;
-    }
-
-    Contacts.goBack();
-  };
 
   var checkOnline = function() {
     // Perform pending automatic logouts
@@ -330,22 +361,9 @@
     });
   };
 
-  var refresh = function refresh() {
-    Settings.getData();
-    checkOnline();
-    checkSIMCard();
-    utils.sdcard.getStatus(function statusUpdated() {
-      updateStorageOptions(utils.sdcard.checkStorageCard());
-    });
-    updateTimestamps();
-    checkNoContacts();
-  };
-
   exports.SettingsUI = {
     'init': init,
     'close': close,
-    'refresh': refresh,
-    'cardStateChanged': checkSIMCard,
     'updateTimestamps': updateTimestamps,
     'showICEScreen' : showICEScreen,
     get navigation() { return navigationHandler; },

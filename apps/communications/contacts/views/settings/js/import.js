@@ -1,179 +1,5 @@
-'use strict';
-/* global _ */
-/* global ConfirmDialog */
-/* global Contacts */
-/* global ContactsBTExport */
-/* global ContactsExporter */
-/* global ContactsSDExport */
-/* global ContactsSIMExport */
-/* global fb */
-/* global IccHandler */
-/* global LazyLoader */
-/* global Rest */
-/* global SimContactsImporter */
-/* global SimDomGenerator */
-/* global utils */
-/* global VCFReader */
-/* global ContactsService */
-/* global ExtServices */
-/* global SettingsUI */
-/* global contacts */
-/* global Controller */
-
 (function(exports) {
-  var PENDING_LOGOUT_KEY = 'pendingLogout';
-
-    var EXPORT_TRANSITION_LEVEL = 2, DELETE_TRANSITION_LEVEL = 1;
-
-  // Initialise the settings screen (components, listeners ...)
-  var init = function initialize() {
-    // Create the DOM for our SIM cards and listen to any changes
-    IccHandler.init(new SimDomGenerator(), SettingsUI.cardStateChanged);
-
-    fbLoader.load();
-
-    ////////
-
-    window.addEventListener('close-ui', function() {
-      window.location.href = '/contacts/views/list/list.html';
-    });
-
-    window.addEventListener('delete-ui', function() {
-        window.location.href = '/contacts/views/list/list.html?action=delete';
-    });
-
-    document.getElementById('import-options').addEventListener(
-      'click',
-      doImportHandler
-    );
-
-    function doImportHandler(e){
-      /* jshint validthis:true */
-
-      var source = getSource(e);
-      switch (source) {
-        case 'sim':
-          var iccId = e.target.parentNode.dataset.iccid;
-          window.setTimeout(requireSimImport.bind(this,
-            onSimImport.bind(this, iccId)), 0);
-          break;
-        case 'sd':
-          window.setTimeout(requireOverlay.bind(this, onSdImport), 0);
-          break;
-        case 'gmail':
-          ExtServices.importGmail();
-          break;
-        case 'live':
-          ExtServices.importLive();
-          break;
-      }
-    };
-
-    document.getElementById('export-options').addEventListener(
-      'click',
-      doExportHandler
-    );
-
-    function doExportHandler(e){
-      var source = getSource(e);
-      var location = '/contacts/views/list/list.html?action=export&destination=' + source
-      if (source === 'sim') {
-        var iccId = e.target.parentNode.dataset.iccid;
-        location += '&' + iccId;
-      }
-      window.location.href = location;
-    }
-    ////////
-  };
-
-  //////////////////
-
-  // Given an event, select wich should be the targeted
-  // import/export source
-  var getSource = function(e) {
-    var source = e.target.parentNode.dataset.source;
-    // Check special cases
-    if (source && source.indexOf('-') != -1) {
-      source = source.substr(0, source.indexOf('-'));
-    }
-    return source;
-  };
-
-  //////////////////
-
-  var checkNoContacts = function() {
-    return new Promise((resolve, reject) => {
-      ContactsService.isEmpty(function(error, isEmpty) {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(isEmpty);
-        }
-      });
-    });
-  };
-
-  /**
-   * Loads the overlay class before showing
-   */
-  var requireOverlay = function(callback) {
-    Loader.utility('Overlay', callback);
-  };
-
-  function saveStatus(data) {
-    window.asyncStorage.setItem(PENDING_LOGOUT_KEY, data);
-  }
-
-  var automaticLogout = function() {
-    if (navigator.offLine === true) {
-      return;
-    }
-
-    LazyLoader.load(['/shared/js/contacts/utilities/http_rest.js'],
-    function() {
-      window.asyncStorage.getItem(PENDING_LOGOUT_KEY, function(data) {
-        if (!data) {
-          return;
-        }
-        var services = Object.keys(data);
-        var numResponses = 0;
-
-        services.forEach(function(service) {
-          var url = data[service];
-
-          var callbacks = {
-            success: function logout_success() {
-              numResponses++;
-              window.console.log('Successfully logged out: ', service);
-              delete data[service];
-              if (numResponses === services.length) {
-                saveStatus(data);
-              }
-            },
-            error: function logout_error() {
-              numResponses++;
-              if (numResponses === services.length) {
-                saveStatus(data);
-              }
-            },
-            timeout: function logout_timeout() {
-              numResponses++;
-              if (numResponses === services.length) {
-                saveStatus(data);
-              }
-            }
-          };
-          Rest.get(url, callbacks);
-        });
-      });
-    });
-  };
-
-  function Settings() {
-    Controller.call(this);
-  }
-
-////////// IMPORT ////////////////
+  'use strict';
 
   /**
    * Loads required libraries for sim import
@@ -195,6 +21,7 @@
 
   // Import contacts from SIM card and updates ui
   var onSimImport = function(iccId, done) {
+  	console.info("Sim Import");
     var icc = IccHandler.getIccById(iccId);
     if (icc === null) {
       return;
@@ -236,6 +63,7 @@
     };
 
     importer.onfinish = function import_finish(numDupsMerged) {
+    	console.info("finish");
       window.setTimeout(function onfinish_import() {
         resetWait(wakeLock);
         if (importedContacts > 0) {
@@ -410,7 +238,7 @@
         callback: function() {
           ConfirmDialog.hide();
           // And now the action is reproduced one more time
-          window.setTimeout(requireOverlay.bind(this, onSdImport), 0);
+          window.setTimeout(requireOverlay.bind(this, Import.onSdImport), 0);
         }
       };
       ConfirmDialog.show(null, 'memoryCardContacts-error', cancel,
@@ -422,6 +250,48 @@
     }
   };
 
+  var doExport = function(strategy) {
+    // Launch the selection mode in the list, and then invoke
+    // the export with the selected strategy.
+
+    contacts.List.selectFromList(_('exportContactsAction'),   //TODO: Go to list.
+      function onSelectedContacts(promise) {
+        // Resolve the promise, meanwhile show an overlay to
+        // warn the user of the ongoin operation, dismiss it
+        // once we have the result
+        requireOverlay(function _loaded() {
+          utils.overlay.show('preparing-contacts', null, 'spinner');
+          promise.onsuccess = function onSuccess(ids) {
+            // Once we start the export process we can exit from select mode
+            // This will have to evolve once export errors can be captured
+            contacts.List.exitSelectMode();
+            var exporter = new ContactsExporter(strategy);
+            exporter.init(ids, function onExporterReady() {
+              // Leave the contact exporter to deal with the overlay
+              exporter.start();
+            });
+          };
+          promise.onerror = function onError() {
+            contacts.List.exitSelectMode();
+            utils.overlay.hide();
+          };
+        });
+      },
+      null,
+      SettingsUI.navigationHandler,
+      {
+        isDanger: false,
+        transitionLevel: EXPORT_TRANSITION_LEVEL,
+        filterList: [
+          {
+            'containerClass': 'disable-fb-items',
+            'numFilteredContacts': 0
+          }
+        ]
+      }
+    );
+  };
+
   function resetWait(wakeLock) {
     Contacts.hideOverlay();
     if (wakeLock) {
@@ -429,14 +299,10 @@
     }
   }
 
-////////// IMPORT ////////////////
-
-  Settings.prototype = {
-    'init': init,
-    'checkNoContacts': checkNoContacts,
-    'automaticLogout': automaticLogout
+  exports.Import = {
+    'onSimImport': onSimImport,
+    'onSdImport': onSdImport,
+    'requireSimImport': requireSimImport,
+    'doExport': doExport
   };
-
-  exports.Settings = new Settings();
-
-})(window);
+}(window));

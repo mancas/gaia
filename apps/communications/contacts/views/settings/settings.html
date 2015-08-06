@@ -46,6 +46,7 @@
     <link rel="stylesheet" type="text/css" href="/shared/elements/gaia_sim_picker/style.css">
     <script defer src="/shared/elements/gaia_menu/script.js"></script>
     <script defer src="/shared/elements/gaia_sim_picker/script.js"></script>
+    <script defer src="/shared/elements/gaia_switch/script.js"></script>
     -->
 
     <script defer src="/shared/js/lazy_loader.js"></script>
@@ -60,12 +61,22 @@
     <link rel="localization" href="/shared/locales/date/date.{locale}.properties">
     <link rel="localization" href="/shared/locales/phone_types/phone_types.{locale}.properties">
 
-    <link rel="import" href="/contacts/elements/overlay.html">
+    <link rel="import" href="/contacts/elements/confirm.html">
+    <link rel="import" href="/contacts/elements/status.html">
     <link rel="import" href="/contacts/elements/settings.html">
+    <link rel="import" href="/contacts/elements/multiple_select.html">
+
+    <link rel="import" href="/contacts/elements/overlay.html">
+    <!--
+    <link href="/shared/pages/import/oauth.html">
+    <link href="/shared/pages/import/curtain.html">
+    -->
   </head>
 
   <body role="application" class="app-contacts skin-comms theme-communications">
     <form    is="confirm-form" data-type="confirm" id="loading-overlay" class="hide no-opacity" role="dialog"></form>
     <article is="settings" id="settings-wrapper"></article>
+    <form    is="confirmation-message" id="confirmation-message" class="hide" role="dialog" data-type="confirm"></form>
+    <section is="status-message" id="statusMsg" role="status" class="hidden"></section>
   </body>
 </html>

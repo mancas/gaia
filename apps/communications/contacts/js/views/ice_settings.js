@@ -53,7 +53,7 @@ contacts.ICE = (function() {
 
     // ICE Events handlers
     iceSettingsHeader.addEventListener('action', function(){
-      contacts.Settings.navigation.back();
+      SettingsUI.navigation.back();
     });
 
     // All the controls do the same, just modifications on the
@@ -192,28 +192,6 @@ contacts.ICE = (function() {
     }
   }
 
-  function goBack() {
-    contacts.List.clearClickHandlers();
-    contacts.List.handleClick(Contacts.showContactDetail);
-    HeaderUI.setNormalHeader();
-
-    var hasICESet = ICEData.iceContacts.find(function(x) {
-      return x.active === true;
-    });
-
-    if (!hasICESet) {
-      resetIceGroupStates();
-    }
-
-    if (contacts.Search && contacts.Search.isInSearchMode()) {
-      contacts.Search.exitSearchMode();
-    }
-
-    contacts.Settings.navigation.back(() => {
-      hasICESet && contacts.List.toggleICEGroup(true);
-    });
-  }
-
   /**
    * Given a contact id, saves it internally. Also restores the contact
    * list default handler.
@@ -223,7 +201,7 @@ contacts.ICE = (function() {
    */
   function selectICEHandler(id) {
     checkContact(id).then(function() {
-      setICEContact(id, currentICETarget, true, goBack);
+      setICEContact(id, currentICETarget, true);
     }, function error(l10nId) {
       var dismiss = {
         title: 'ok',
@@ -295,12 +273,30 @@ contacts.ICE = (function() {
    * @para target (HTMLButton) Button click to select an ICE contact
    */
   function showSelectList(target) {
+    /*
     contacts.List.toggleICEGroup(false);
     HeaderUI.setCancelableHeader(goBack, 'selectContact');
     contacts.Settings.navigation.go('view-contacts-list', 'right-left');
     currentICETarget = target === 'select-ice-contact-1' ? 0 : 1;
     contacts.List.clearClickHandlers();
     contacts.List.handleClick(selectICEHandler);
+    */
+    var activity = new MozActivity({
+      name: "pick",
+
+      data: {
+        type: "webcontacts/contact",
+        fullContact: true
+      }
+    });
+
+    activity.onsuccess = (function() {
+      var contact = activity.result;
+      if( contact ){
+        currentICETarget = target === 'select-ice-contact-1' ? 0 : 1;
+        selectICEHandler(contact.id);
+      }
+    }).bind(this);
   }
 
   /**

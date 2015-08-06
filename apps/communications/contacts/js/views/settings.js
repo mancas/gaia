@@ -234,26 +234,7 @@ contacts.Settings = (function() {
   }
 
   var bulkDeleteHandler = function bulkDeleteHandler() {
-    LazyLoader.load(
-      [
-        '/contacts/js/contacts_bulk_delete.js',
-        '/contacts/js/contacts_remover.js'
-      ],
-      function() {
-        Loader.view('search', function() {
-          contacts.List.selectFromList(_('DeleteTitle'),
-            function onSelectedContacts(promise, done) {
-              contacts.BulkDelete.performDelete(promise, done);
-            },
-            null,
-            navigationHandler,
-            {
-              transitionLevel: DELETE_TRANSITION_LEVEL
-            }
-          );
-        });
-      }
-    );
+    window.location.href = '/contacts/views/settings/settings.html';
   };
 
   function exportOptionsHandler(e) {

@@ -450,23 +450,26 @@ var Contacts = (function() {
     // adds contacts to the list which triggers many reflows.  Therefore,
     // minimize this impact by hiding the list while we are showing the
     // overlay.
-    contacts.List.hide();
+    //contacts.List.hide();
     return out;
   };
 
   var hideOverlay = function c_hideOverlay() {
     Loader.utility('Overlay', function _loaded() {
-      contacts.List.show();
+      //contacts.List.show();
       utils.overlay.hide();
     });
   };
 
   var showSettings = function showSettings() {
+    window.location.href = '/contacts/views/settings/settings.html';
+    /*
     initSettings(function onSettingsReady() {
       // The number of FB Friends has to be recalculated
       contacts.Settings.refresh();
       MainNavigation.go('view-settings', 'fade-in');
     });
+    */
   };
 
   var stopPropagation = function stopPropagation(evt) {
@@ -581,7 +584,7 @@ var Contacts = (function() {
   };
 
 
-  ContactsService.addListener('contactchange', oncontactchange);
+  //ContactsService.addListener('contactchange', oncontactchange);
 
   var performOnContactChange = function performOnContactChange(event) {
     // To be on the safe side for now we evict the cache everytime a
