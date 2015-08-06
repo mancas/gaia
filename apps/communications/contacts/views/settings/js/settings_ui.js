@@ -198,6 +198,7 @@
     cacheElements();
     addListeners();
     getData();
+    checkNoContacts();
     // To avoid any race condition we listen for online events once
     // containers have been initialized
     window.addEventListener('online', checkOnline);

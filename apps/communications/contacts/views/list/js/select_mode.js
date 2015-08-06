@@ -78,9 +78,14 @@
     var selectAllDisabled = false;
     var deselectAllDisabled = false;
     currentlySelected = countSelectedContacts();
-
+    var _updated = false;
     switch (action) {
       case 'deselect-all':
+        var inputs = document.querySelectorAll('input[value]');
+        for(var i = 0; i < inputs.length; i++) {
+          inputs[i].checked = false;
+        }
+        _updated = true;
         selectAllPending = false;
         deselectAllContacts();
         currentlySelected = 0;
@@ -88,6 +93,12 @@
         deselectAllDisabled = true;
         break;
       case 'select-all':
+        var inputs = document.querySelectorAll('input[value]');
+        for(var i = 0; i < inputs.length; i++) {
+          inputs[i].checked = true;
+        }
+        _updated = true;
+
         selectAllPending = true && !loaded;
         selectAllContacts();
 
@@ -102,8 +113,10 @@
         break;
     }
 
-    updateRowsOnScreen();
-
+    if (!_updated) {
+      updateRowsOnScreen();
+    }
+    
     selectActionButton.disabled = currentlySelected === 0;
     selectAll.disabled = selectAllDisabled;
     deselectAll.disabled = deselectAllDisabled;
