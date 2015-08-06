@@ -38,34 +38,55 @@ var utils = window.utils || {};
     };
   }
 
-  function init() {
-    return new Promise(function(resolve, reject) {
-      overlay = document.createElement('form');
-      overlay.setAttribute('is', 'confirm-form');
-      overlay.setAttribute('data-type', 'confirm');
-      overlay.setAttribute('id', 'loading-overlay');
-      overlay.setAttribute('role', 'dialog');
-      overlay.className = 'hide no-opacity';
-      document.head.appendChild(link);
-      document.body.appendChild(overlay);
-      LazyLoader.load([
-        '/shared/js/html_imports.js'
-      ], function() {
-        HtmlImports.populate(function() {
-          cacheElements();
-          addListeners();
-          resolve();
-        });
+  function loadTemplate() {
+    overlay = document.createElement('form');
+    overlay.setAttribute('is', 'confirm-form');
+    overlay.setAttribute('data-type', 'confirm');
+    overlay.setAttribute('id', 'loading-overlay');
+    overlay.setAttribute('role', 'dialog');
+    overlay.className = 'hide no-opacity';
+    document.head.appendChild(link);
+    document.body.appendChild(overlay);
+    LazyLoader.load([
+      '/shared/js/html_imports.js'
+    ], function() {
+      HtmlImports.populate(function() {
+        cacheElements();
+        addListeners();
       });
     });
   }
 
+  loadTemplate();
+  function init() {
+    return Promise.resolve();
+    // return new Promise(function(resolve, reject) {
+    //   overlay = document.createElement('form');
+    //   overlay.setAttribute('is', 'confirm-form');
+    //   overlay.setAttribute('data-type', 'confirm');
+    //   overlay.setAttribute('id', 'loading-overlay');
+    //   overlay.setAttribute('role', 'dialog');
+    //   overlay.className = 'hide no-opacity';
+    //   document.head.appendChild(link);
+    //   document.body.appendChild(overlay);
+    //   LazyLoader.load([
+    //     '/shared/js/html_imports.js'
+    //   ], function() {
+    //     HtmlImports.populate(function() {
+    //       cacheElements();
+    //       addListeners();
+    //       resolve();
+    //     });
+    //   });
+    // });
+  }
+
   function removeOverlay() {
 
-    document.head.removeChild(link);
-    document.body.removeChild(overlay);
-    overlay = null;
-    delete cancelButton.onclick;
+    // document.head.removeChild(link);
+    // document.body.removeChild(overlay);
+    // overlay = null;
+    // delete cancelButton.onclick;
   }
 
   // Constructor for the progress element

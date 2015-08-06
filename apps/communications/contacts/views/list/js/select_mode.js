@@ -323,6 +323,7 @@
   function doDeleteAction() {
     LazyLoader.load(
       [
+        '/shared/js/contacts/import/utilities/misc.js',
         '/contacts/js/contacts_bulk_delete.js',
         '/contacts/js/contacts_remover.js'
       ], function() {
