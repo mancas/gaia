@@ -90,5 +90,15 @@ window.addEventListener('load', function() {
       params.action === 'export')) {
       SelectMode.init(params);
     }
+
+    navigator.mozSetMessageHandler(
+      'activity',
+      function(activity) {
+        console.info(activity);
+        ListController.setActivity(
+          activity
+        );
+      }
+    );
   });
 });
