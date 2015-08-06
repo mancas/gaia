@@ -100,7 +100,7 @@
 
     document.cookie = COOKIE_NAME + '=' +
                                 encodeURIComponent(JSON.stringify(newCookie)) +
-                                ';expires=' + EXPIRATION_DATE;
+                                ';expires=' + EXPIRATION_DATE + ';path=/';
 
   }
 
