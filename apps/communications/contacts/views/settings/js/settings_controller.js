@@ -29,12 +29,12 @@
 
 
     window.addEventListener('close-ui', function() {
-      window.history.back();
+      window.history.go(-(window.history.length-1));
     });
 
     window.addEventListener('delete-ui', function() {
-      //TODO apply the new list call when ready
-      window.location.href = '/contacts/views/list/list.html?action=delete';
+      sessionStorage.setItem('action', 'delete');
+      window.history.go(-(window.history.length-1));
     });
 
     ContactsService.addListener('contactchange',
@@ -89,21 +89,20 @@
     function handleExport(event){
       var dataset = event.detail.target.parentNode.dataset;
       var source = getSource(dataset);
-      var location = '/contacts/views/list/list.html' +
-                     '?action=export&destination=' +
-                     source;
-
+      sessionStorage.setItem('action', 'export');
+      sessionStorage.setItem('destination', source);
+      
       switch (source) {
         case 'sim':
           var iccId = dataset.iccid;
-          location += '&' + iccId;
+          sessionStorage.setItem('iccId', iccId);
           break;
         case 'sd':
         case 'bluetooth':
           break;
       }
-      //TODO apply the new list call when ready
-      window.location.href = location;
+
+      window.history.go(-(window.history.length-1));
     }
     window.addEventListener('exportClicked', handleExport);
   }
