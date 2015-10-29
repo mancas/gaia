@@ -6,7 +6,6 @@
 /* global Overlay */
 /* global Rest */
 /* global SimContactsImporter */
-/* global SimDomGenerator */
 /* global utils */
 /* global VCFReader */
 /* global ContactsService */
@@ -22,10 +21,8 @@
   var _activity = null;
   var _changedContacts = [];
 
-  // Initialise the settings screen (components, listeners ...)
+  // Initialise the settings controller events
   function init() {
-    // Create the DOM for our SIM cards and listen to any changes
-    IccHandler.init(new SimDomGenerator(), SettingsUI.cardStateChanged);
 
     // TODO rename (includes outlook and gmail too) and delete FB part
     fbLoader.load();

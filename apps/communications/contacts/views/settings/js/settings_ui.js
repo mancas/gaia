@@ -4,6 +4,8 @@
 /* global LazyLoader */
 /* global Cache */
 /* global utils */
+/* global SimDomGenerator */
+/* global IccHandler */
 
 /***
  This class handles all the activity regarding
@@ -176,8 +178,48 @@
     });
   }
 
+  // Disables/Enables an option and show the error if needed
+  function updateOptionStatus(domOption, disabled, error) {
+    if (domOption === null) {
+      return;
+    }
+    var optionButton = domOption.firstElementChild;
+    if (disabled) {
+      optionButton.setAttribute('disabled', 'disabled');
+      if (error) {
+        domOption.classList.add('error');
+      } else {
+        domOption.classList.remove('error');
+      }
+    } else {
+      optionButton.removeAttribute('disabled');
+      domOption.classList.remove('error');
+    }
+  }
+
+  // Disables/Enables the actions over the sim import functionality
+  function enableSIMOptions(iccId, cardState) {
+    var importSimOption = document.getElementById('import-sim-option-' + iccId);
+    var exportSimOption = document.getElementById('export-sim-option-' + iccId);
+    var disabled = (cardState !== 'ready' && cardState !== 'illegal');
+    updateOptionStatus(importSimOption, disabled, true);
+    updateOptionStatus(exportSimOption, disabled, true);
+  }
+
+  // Options checking & updating
+  function checkSIMCard() {
+    var statuses = IccHandler.getStatus();
+    statuses.forEach(function onStatus(status) {
+      enableSIMOptions(status.iccId, status.cardState);
+    });
+  }
+
+
   // Initialise the settings screen (components, listeners ...)
   function init() {
+    // Create the DOM for our SIM cards and listen to any changes
+    IccHandler.init(new SimDomGenerator(), checkSIMCard);
+
     cacheElements();
     addListeners();
     getData();
