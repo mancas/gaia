@@ -380,7 +380,11 @@
       case 'sim':
         var iccId = operation.iccid;
         LazyLoader.load(['/contacts/js/export/sim.js',
-          '/contacts/js/utilities/icc_handler.js'],
+          '/contacts/js/utilities/icc_handler.js',
+          '/contacts/js/export/contacts_exporter.js',
+          '/shared/js/contacts/import/utilities/status.js',
+          '/shared/js/confirm.js',
+          document.getElementById('confirmation-message')],
           function() {
             doExport(new ContactsSIMExport(IccHandler.getIccById(iccId)));
           }
@@ -393,7 +397,9 @@
             '/shared/js/device_storage/get_unused_filename.js',
             '/shared/js/contact2vcard.js',
             '/shared/js/setImmediate.js',
-            '/contacts/js/export/sd.js'
+            '/contacts/js/export/sd.js',
+            '/contacts/js/export/contacts_exporter.js',
+            '/shared/js/contacts/import/utilities/status.js'
           ],
           function() {
             doExport(new ContactsSDExport());
@@ -407,7 +413,9 @@
             '/shared/js/device_storage/get_unused_filename.js',
             '/shared/js/contact2vcard.js',
             '/shared/js/setImmediate.js',
-            '/contacts/js/export/bt.js'
+            '/contacts/js/export/bt.js',
+            '/contacts/js/export/contacts_exporter.js',
+            '/shared/js/contacts/import/utilities/status.js'
           ],
           function() {
             doExport(new ContactsBTExport());
@@ -425,6 +433,20 @@
       Overlay.showSpinner('preparing-contacts');
 
       var selectionPromise = createSelectPromise();
+      selectionPromise.onsuccess = function onSuccess(ids) {
+        // Once we start the export process we can exit from select mode
+        // This will have to evolve once export errors can be captured
+        exitSelectMode();
+        var exporter = new ContactsExporter(strategy);
+        exporter.init(ids, function onExporterReady() {
+          // Leave the contact exporter to deal with the overlay
+          exporter.start();
+        });
+      };
+      selectionPromise.onerror = function onError() {
+        exitSelectMode();
+        Overlay.hide();
+      };
 
       // If we are in the middle of a pending select all
       // (we clicked and the list is still not completely loaded)
@@ -449,21 +471,6 @@
       }
 
       selectionPromise.resolve(ids);
-
-      selectionPromise.onsuccess = function onSuccess(ids) {
-        // Once we start the export process we can exit from select mode
-        // This will have to evolve once export errors can be captured
-        exitSelectMode();
-        var exporter = new ContactsExporter(strategy);
-        exporter.init(ids, function onExporterReady() {
-          // Leave the contact exporter to deal with the overlay
-          exporter.start();
-        });
-      };
-      selectionPromise.onerror = function onError() {
-        exitSelectMode();
-        Overlay.hide();
-      };
     });
   }
 

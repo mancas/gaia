@@ -91,12 +91,10 @@
   //Export
   function exportHandler() {
     // Hide elements for import and transition
-    LazyLoader.load(['/contacts/js/export/contacts_exporter.js'], () => {
-      importSettingsPanel.classList.remove('import');
-      importSettingsPanel.classList.add('export');
-      updateImportTitle('exportContactsTitle');
-      navigationHandler.go('import-settings', 'right-left');
-    });
+    importSettingsPanel.classList.remove('import');
+    importSettingsPanel.classList.add('export');
+    updateImportTitle('exportContactsTitle');
+    navigationHandler.go('import-settings', 'right-left');
   }
 
   //ICE
