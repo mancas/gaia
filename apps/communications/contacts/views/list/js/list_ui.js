@@ -242,6 +242,16 @@ monitorTagVisibility */
     });
 
     window.addEventListener('pageshow', function() {
+       // XXX: We need to get back the theme color
+      // due to the bug with back&forward cache
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=1184953
+      var meta = document.querySelector('meta[name="theme-color"]');
+      document.head.removeChild(meta);
+      meta = document.createElement('meta');
+      meta.content = 'var(--header-background)';
+      meta.name = 'theme-color';
+      document.head.appendChild(meta);
+
       window.dispatchEvent(new CustomEvent('list-shown'));
       loadICE();
       checkContactChanges();
