@@ -40,6 +40,20 @@
       window.location.href = '/contacts/views/list/list.html?action=delete';
     });
 
+    ContactsService.addListener('contactchange',
+      function oncontactchange(event) {
+        var eventsStringified = sessionStorage.getItem('contactChanges');
+        var events = [];
+        if (eventsStringified && eventsStringified !== 'null') {
+          events = JSON.parse(eventsStringified);
+        }
+        events.push({
+          contactID: event.contactID,
+          reason: event.reason
+        });
+        sessionStorage.setItem('contactChanges', JSON.stringify(events));
+    });
+
     // Given an event, select which element should be targeted
     function getSource(dataset) {
       var source = dataset.source;
