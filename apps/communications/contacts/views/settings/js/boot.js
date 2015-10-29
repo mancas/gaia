@@ -24,7 +24,6 @@ window.onload = function() {
   var dependencies = [
     // style
     '/contacts/style/overlay.css',
-    '/shared/elements/gaia_switch/script.js',
     // shared
     '/shared/js/async_storage.js',
     '/shared/js/confirm.js',
