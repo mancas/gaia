@@ -243,6 +243,7 @@ monitorTagVisibility */
 
     window.addEventListener('pageshow', function() {
       window.dispatchEvent(new CustomEvent('list-shown'));
+      loadICE();
       checkContactChanges();
       checkOrderChange();
     });
@@ -1014,18 +1015,13 @@ monitorTagVisibility */
   /**
    * Check if we have ICE contacts information
    */
-  var ICELoaded;
   function loadICE() {
-    if (ICELoaded) {
-      return Promise.resolve();
-    }
     return new Promise((resolve, reject) => {
       LazyLoader.load([
         '/contacts/js/utilities/ice_data.js',
         '/shared/js/contacts/utilities/ice_store.js'],
        function() {
         ICEStore.getContacts().then((ids) => {
-          ICELoaded = true;
           displayICEIndicator(ids);
           resolve();
         });
@@ -1054,12 +1050,12 @@ monitorTagVisibility */
   }
 
   function toggleICEGroup(show) {
+    forceICEGroupToBeHidden = !(!!show);
     if (!iceGroup) {
       return;
     }
 
     iceState = !iceGroup.classList.contains('hide');
-    forceICEGroupToBeHidden = !(!!show);
     forceICEGroupToBeHidden ? hideICEGroup() : showICEGroup();
   }
 
@@ -1080,6 +1076,7 @@ monitorTagVisibility */
     // <toggleICEGroup> it will only be displayed again using the same
     // mechanism regardless updates.
     if (forceICEGroupToBeHidden) {
+      hideICEGroup();
       return;
     }
     iceGroup.classList.remove('hide');
@@ -1746,7 +1743,6 @@ monitorTagVisibility */
       return;
     }
     iceGroup = null;
-    ICELoaded = false;
     utils.dom.removeChildNodes(groupsList);
     headers = {};
     loadedContacts = {};
