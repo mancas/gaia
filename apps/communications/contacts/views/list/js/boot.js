@@ -77,6 +77,28 @@ window.addEventListener('load', function() {
     ListUI.init(params.action);
     ListController.init();
 
+
+    window.addEventListener('pageshow', function() {
+      switch(sessionStorage.getItem('action')) {
+        case 'delete':
+          SelectMode.init({action: 'delete'});
+          sessionStorage.setItem('action', null);
+          break;
+        case 'export':
+          SelectMode.init(
+            {
+              action: 'export',
+              destination: sessionStorage.getItem('destination') || '',
+              iccId: sessionStorage.getItem('iccId') || ''
+            }
+          );
+          sessionStorage.setItem('action', null);
+          sessionStorage.setItem('destination', null);
+          sessionStorage.setItem('iccId', null);
+          break;
+      }
+    });
+
     if (params.action && (params.action === 'delete' ||
       params.action === 'export')) {
       SelectMode.init(params);
