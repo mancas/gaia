@@ -1,7 +1,7 @@
 /* globals ListUtils, Cache, Search, HeaderUI, ActivityHandler,
 ContactsService, utils, Normalizer, LazyLoader, Loader, SelectMode, ICEStore,
 ICEData, ICEView, ImageLoader, ContactPhotoHelper, ConfirmDialog,
-monitorTagVisibility */
+monitorTagVisibility, GaiaHeader, GaiaSubheader */
 
 (function(exports){
   'use strict';
@@ -245,7 +245,18 @@ monitorTagVisibility */
     });
 
     window.addEventListener('pageshow', function() {
-       // XXX: We need to get back the theme color
+      // XXX: Workaround until the platform will be fixed
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=1184953
+      document.registerElement(
+        'gaia-header',
+        { prototype: GaiaHeader.prototype }
+      );
+      document.registerElement(
+        'gaia-subheader',
+        { prototype: GaiaSubheader.prototype }
+      );
+
+      // XXX: We need to get back the theme color
       // due to the bug with back&forward cache
       // https://bugzilla.mozilla.org/show_bug.cgi?id=1184953
       var meta = document.querySelector('meta[name="theme-color"]');
