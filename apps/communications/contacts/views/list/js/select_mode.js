@@ -35,7 +35,8 @@
       searchList = null,
       currentlySelected = 0,
       isDangerSelectList = false,
-      selectedContacts = {};
+      selectedContacts = {},
+      exportButtonHandler = null;
 
   /*
     Returns back the list to it's normal behaviour
@@ -54,6 +55,9 @@
         selectForm.classList.add('hide');
       });
     });
+
+    selectActionButton.removeEventListener('click', exportButtonHandler);
+    exportButtonHandler = null;
 
     selectForm.classList.remove('in-edit-mode');
     selectForm.classList.remove('contacts-select');
@@ -229,12 +233,12 @@
 
     var title = 'DeleteTitle';
     if (operation.action === 'delete') {
-      selectActionButton.addEventListener('click', doDeleteAction);
+      exportButtonHandler = doDeleteAction;
     } else {
       title = 'exportContactsAction';
-      selectActionButton.addEventListener('click',
-        doExportAction.bind(null, operation));
+      exportButtonHandler = doExportAction.bind(null, operation);
     }
+    selectActionButton.addEventListener('click', exportButtonHandler);
 
     selectActionButton.setAttribute('data-l10n-id', title);
 
