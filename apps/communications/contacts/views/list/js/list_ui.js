@@ -37,7 +37,6 @@ monitorTagVisibility */
       iceContacts = [],
       iceGroup = null,
       iceState = null,
-      forceICEGroupToBeHidden = false,
       clonableSelectCheck = null,
       _action = null;
 
@@ -151,6 +150,13 @@ monitorTagVisibility */
     monitor && monitor.resumeMonitoringMutations(false);
   }
 
+  function initAction(action) {
+    if (action) {
+      _action = action;
+      toggleICEGroup(false);
+    }
+  }
+
   function init(action, reset) {
     _ = navigator.mozL10n.get;
     cancel = document.getElementById('cancel-search');
@@ -163,10 +169,7 @@ monitorTagVisibility */
 
     groupsList = document.getElementById('groups-list');
 
-    if (action) {
-      _action = action;
-      toggleICEGroup(false);
-    }
+    
 
     addListeners();
 
@@ -1060,35 +1063,25 @@ monitorTagVisibility */
   }
 
   function toggleICEGroup(show) {
-    forceICEGroupToBeHidden = !(!!show);
     if (!iceGroup) {
       return;
     }
 
     iceState = !iceGroup.classList.contains('hide');
-    forceICEGroupToBeHidden ? hideICEGroup() : showICEGroup();
+    show ? hideICEGroup() : showICEGroup();
   }
 
   function restoreICEGroupState() {
     if (!iceState) {
-      // ICE hasn't been loaded yet so let's force to load it again
-      loadICE();
-    } else {
-      iceState ? showICEGroup() : hideICEGroup();
+      return;
     }
-
+    iceState ? showICEGroup() : hideICEGroup();
+    
     // Clear flag
     iceState = null;
  }
 
   function showICEGroup() {
-    // If the ICE group has been hidden programmatically by means of
-    // <toggleICEGroup> it will only be displayed again using the same
-    // mechanism regardless updates.
-    if (forceICEGroupToBeHidden) {
-      hideICEGroup();
-      return;
-    }
     iceGroup.classList.remove('hide');
     utils.alphaScroll.showGroup('ice');
   }
@@ -1991,6 +1984,7 @@ monitorTagVisibility */
   }
 
   exports.ListUI = {
+    initAction: initAction,
     'init': init,
     get chunkSize() {
       return CHUNK_SIZE;
