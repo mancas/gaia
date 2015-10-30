@@ -157,7 +157,7 @@ monitorTagVisibility, GaiaHeader, GaiaSubheader */
     }
   }
 
-  function init(action, reset) {
+  function init(reset) {
     _ = navigator.mozL10n.get;
     cancel = document.getElementById('cancel-search');
     contactsListView = document.getElementById('view-contacts-list');
@@ -168,8 +168,6 @@ monitorTagVisibility, GaiaHeader, GaiaSubheader */
     searchInput = document.querySelector('#search-start > input');
 
     groupsList = document.getElementById('groups-list');
-
-    
 
     addListeners();
 
