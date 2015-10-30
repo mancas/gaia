@@ -232,12 +232,16 @@
     utils.alphaScroll.toggleFormat('short');
 
     var title = 'DeleteTitle';
-    if (operation.action === 'delete') {
-      exportButtonHandler = doDeleteAction;
-    } else {
-      title = 'exportContactsAction';
-      exportButtonHandler = doExportAction.bind(null, operation);
+    switch (operation.action) {
+      case 'delete':
+        exportButtonHandler = doDeleteAction;
+        break;
+      case 'export':
+        title = 'exportContactsAction';
+        exportButtonHandler = doExportAction.bind(null, operation);
+        break;
     }
+
     selectActionButton.addEventListener('click', exportButtonHandler);
 
     selectActionButton.setAttribute('data-l10n-id', title);
@@ -382,7 +386,8 @@
   function doExportAction(operation) {
     switch (operation.destination) {
       case 'sim':
-        var iccId = operation.iccid;
+        var iccId = operation.iccId;
+
         LazyLoader.load(['/contacts/js/export/sim.js',
           '/contacts/js/utilities/icc_handler.js',
           '/contacts/js/export/contacts_exporter.js',
@@ -390,6 +395,8 @@
           '/shared/js/confirm.js',
           document.getElementById('confirmation-message')],
           function() {
+            // TODO promise like init function?
+            IccHandler.init();
             doExport(new ContactsSIMExport(IccHandler.getIccById(iccId)));
           }
         );

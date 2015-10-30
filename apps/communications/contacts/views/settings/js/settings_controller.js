@@ -91,16 +91,9 @@
       var source = getSource(dataset);
       sessionStorage.setItem('action', 'export');
       sessionStorage.setItem('destination', source);
-      
-      switch (source) {
-        case 'sim':
-          var iccId = dataset.iccid;
-          sessionStorage.setItem('iccId', iccId);
-          break;
-        case 'sd':
-        case 'bluetooth':
-          break;
-      }
+      if (source === 'sim') {
+        sessionStorage.setItem('iccId', dataset.iccid);
+      };
 
       window.history.go(-(window.history.length-1));
     }

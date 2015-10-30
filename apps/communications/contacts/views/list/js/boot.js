@@ -58,7 +58,7 @@ window.addEventListener('load', function() {
   LazyLoader.load(dependencies).then(function() {
     utils.PerformanceHelper.contentInteractive();
     utils.PerformanceHelper.chromeInteractive();
-    
+
     ListController.init();
     ListUI.init();
 
@@ -101,11 +101,11 @@ window.addEventListener('load', function() {
       if (!action || action === '' || action == 'null') {
         return;
       }
-      switch(sessionStorage.getItem('action')) {
+
+      switch(action) {
         case 'delete':
           ListUI.initAction(action);
           SelectMode.init({action: action});
-          
           break;
         case 'export':
           ListUI.initAction(action);
